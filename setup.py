@@ -12,7 +12,7 @@ def readme():
 
 setup(
         name='s3peat',
-        version='0.1.0',
+        version='0.1.1',
         author="Jacob Alheid",
         author_email="jake@about.me",
         description="Fast uploader to S3",
