@@ -12,14 +12,14 @@ def readme():
 
 setup(
         name='s3peat',
-        version='0.1.1',
+        version='0.1.2',
         author="Jacob Alheid",
         author_email="jake@about.me",
         description="Fast uploader to S3",
         long_description=readme(),
         url='http://github.com/shakefu/s3peat',
         packages=find_packages(exclude=['test']),
-        # install_requires=['simplejson >= 3.2.0'],
+        install_requires=['boto'],
         # test_suite='nose.collector',
         # tests_require=[
         #     'nose',
