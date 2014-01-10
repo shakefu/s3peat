@@ -173,6 +173,9 @@ the ``time`` command.
 Python API
 ----------
 
+The Python API has inline documentation, which should be good. If there's
+questions, you can open a github issue. Here's an example anyway.
+
 **Example**:
 
 .. code-block:: python
