@@ -31,7 +31,7 @@ When installed via ``pip`` or ``python setup.py install``, a command called
 .. code-block:: text
 
    $ s3peat --help
-   usage: s3peat [--prefix] --bucket  --key  --secret  [--concurrency]
+   usage: s3peat [--prefix] --bucket [--key] [--secret] [--concurrency]
          [--exclude] [--include] [--dry-run] [--verbose] [--version]
          [--help] directory
 
