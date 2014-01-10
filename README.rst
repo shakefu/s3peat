@@ -52,11 +52,11 @@ When installed via ``pip`` or ``python setup.py install``, a command called
      --version            show program's version number and exit
      --help               display this help and exit
 
-**Exmaple**:
+**Example**:
 
 .. code-block:: bash
 
-   $ s3peat -b my/bucket -p my/s3/key/prefix -k KEY -s SECRET -c 25 -v .
+   $ s3peat -b my/bucket -p my/s3/key/prefix -k KEY -s SECRET my-dir/
 
 Configuring
 """""""""""
@@ -102,6 +102,73 @@ These parameters can be specified multiple times, for example:
    # Upload all .txt and .py files, excluding the test directory
    $ s3peat -b my-bucket -i '.txt$' -i '.py$' -e '^test/' .
 
+Doing a Dry-run
+"""""""""""""""
+
+If you're unsure what exactly is in the directory to be uploaded, you can do a
+dry run with the ``--dry-run`` or ``-d`` option.
+
+By default, dry runs only output the number of files found and an error message
+if it cannot connect to the specified S3 bucket. As you increase verbosity,
+more information will be output. See below for examples.
+
+.. code-block:: bash
+
+   $ s3peat -b my-bucket . -e '\.git' --dry-run
+   21 files found.
+
+   $ s3peat -b foo . -e '\.git' --dry-run
+   21 files found.
+   Error connecting to S3 bucket 'foo'.
+
+   $ s3peat -b my-bucket . -e '\.git' --dry-run -v
+   21 files found.
+   Connected to S3 bucket 'my-bucket' OK.
+
+   $ s3peat -b foo . -e '\.git' --dry-run -v
+   21 files found.
+   Error connecting to S3 bucket 'foo'.
+       S3ResponseError: 403 Forbidden
+
+   $ s3peat -b my-bucket . -i 'rst$|py$|LICENSE' --dry-run
+   5 files found.
+
+   $ s3peat -b my-bucket . -i 'rst$|py$|LICENSE' --dry-run -vv
+   Finding files in /home/s3peat/github.com/s3peat ...
+
+   ./LICENSE
+   ./README.rst
+   ./setup.py
+   ./s3peat/__init__.py
+   ./s3peat/scripts.py
+
+   5 files found.
+
+   Connected to S3 bucket 'my-bucket' OK.
+
+Concurrency
+"""""""""""
+
+s3peat is designed to upload to S3 with high concurrency. The only limits are
+the speed of your uplink and the GIL. Python is limited in the number of
+threads that will run concurrently on a single core.
+
+Typically, it seems that more than 50 threads do not add anything to the upload
+speed, but your experiences may differ based on your network and CPU speeds.
+
+If you want to try to tune your concurrency for your platfrom, I suggest using
+the ``time`` command.
+
+**Example**:
+
+.. code-block:: bash
+
+   $ time s3peat -b my-bucket -p my/key/ --concurrency 50 my-dir/
+   271/271 files uploaded                                                                                                                                                                                                                           
+
+   real	0m2.909s
+   user	0m0.488s
+   sys	0m0.114s
 
 Python API
 ----------
