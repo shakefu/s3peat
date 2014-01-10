@@ -19,7 +19,15 @@ setup(
         long_description=readme(),
         url='http://github.com/shakefu/s3peat',
         packages=find_packages(exclude=['test']),
-        install_requires=['boto'],
+        install_requires=[
+            'boto',
+            'pytool',
+            ],
+        entry_points={
+            'console_scripts': {
+                "s3peat = s3peat.scripts:Main.console_script",
+                },
+            },
         # test_suite='nose.collector',
         # tests_require=[
         #     'nose',
