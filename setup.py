@@ -12,7 +12,8 @@ def readme():
 
 setup(
         name='s3peat',
-        version='0.1.2',
+        # Make sure to also update the version in s3peat/__init__.py
+        version='0.2.0',
         author="Jacob Alheid",
         author_email="jake@about.me",
         description="Fast uploader to S3",
