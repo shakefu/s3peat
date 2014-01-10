@@ -25,7 +25,7 @@ class Main(Command):
         self.opt('--key', '-k', metavar='', required=True, help="AWS key id")
         self.opt('--secret', '-s', metavar='', required=True,
                 help="AWS secret")
-        self.opt('--concurrency', '-c', metavar='', type=int,
+        self.opt('--concurrency', '-c', metavar='', type=int, default=1,
                 help="number of threads to use")
 
         self.opt('--exclude', '-e', action='append', type=self.regex,
@@ -46,10 +46,34 @@ class Main(Command):
 
     def run(self):
         """ Method that does all the running. """
-        # If we have a dry run, do it
-        if self.args.dry_run:
-            self._dry_run()
+        a = self.args  # Shorthand
+        if a.concurrency < 1:
+            print >>sys.stderr, "Concurrency must be positive."
+            sys.exit(1)
 
+        if a.verbose > 2:
+            logging.basicConfig()
+            logging.getLogger().setLevel(1)
+
+        if a.verbose > 3:
+            logging.getLogger('boto').setLevel(logging.INFO)
+
+        # If we have a dry run, do it
+        if a.dry_run:
+            self._dry_run()
+        else:
+            output = sys.stdout if a.verbose else None
+            bucket = s3peat.S3Bucket(a.bucket, a.key, a.secret)
+            uploader = s3peat.S3Uploader(a.directory, a.prefix, bucket,
+                    include=a.include, exclude=a.exclude,
+                    concurrency=a.concurrency, output=output)
+            filenames = uploader.upload()
+            if filenames:
+                print >>sys.stderr, "Error uploading files:"
+                print >>sys.stderr, "\n".join(filenames)
+                sys.exit(1)
+
+            self.stop()
 
     def _dry_run(self):
         """

@@ -23,6 +23,9 @@ s3peat - Fast uploading directories to S3
 
 """
 import os
+import sys
+import time
+import signal
 import logging
 from threading import Thread
 
@@ -118,8 +121,8 @@ class S3Queue(Thread):
         """ Run method for the threading API. """
         bucket = self.bucket.get_new()
         # Iterate over the filenames attempting to upload them
-        for filename in self.filenames:
-            self._upload(filename, bucket)
+        while self.filenames:
+            self._upload(self.filenames.pop(), bucket)
 
     def _upload(self, filename, bucket):
         """
@@ -201,10 +204,12 @@ class S3Uploader(object):
         self.bucket = bucket
         self.include = include
         self.exclude = exclude
+        self.concurrency = concurrency
         self.output = output
         self.total = 0
         self.count = 0
         self.errors = 0
+        self.queues = []
 
     def upload(self):
         """
@@ -213,25 +218,51 @@ class S3Uploader(object):
         """
         self.count = 0
         self.errors = 0
+        self.queues = []
+
+        # Set up the signal catcher so Ctrl+C works
+        signal.signal(signal.SIGINT, self.stop)
 
         # Get all the files
         filenames = self.get_filenames(split=True)
 
         # Start a queue with each group of files
-        queues = []
         for queue in filenames:
             queue = S3Queue(self.prefix, queue, self.bucket, self.directory,
                     counter=self.counter)
-            queues.append(queue)
+            self.queues.append(queue)
+            queue.daemon = True
             queue.start()
 
         # Wait for the queues to all finish
         failures = []
-        for queue in queues:
-            queue.join()
+        while True:
+            remaining = sum([len(q.filenames) for q in self.queues])
+            if not remaining:
+                break
+            time.sleep(0.1)
+
+        for queue in self.queues:
             failures.extend(queue.failed)
 
+        if self.output:
+            self.output.write('\n')
+
         return failures
+
+    def stop(self, *args):
+        """
+        Stop all the running queues.
+
+        It works by clearing all the queues list of files left to process,
+        which means the current files will finish.
+
+        """
+        print
+        print >>sys.stderr, "Stopping...                                 "
+        for queue in self.queues:
+            queue.filenames = []
+        sys.exit(1)
 
     def get_filenames(self, split=False):
         """
@@ -273,9 +304,10 @@ class S3Uploader(object):
                 self.total += 1
 
         if split:
-            # Split into equal size lists for each thread
-            filenames = [filenames[i:i + self.concurrency] for i in range(0,
-                len(filenames), self.concurrency)]
+            groups = [list() for i in xrange(self.concurrency)]
+            for i in xrange(len(filenames)):
+                groups[i % self.concurrency].append(filenames[i])
+            filenames = groups
 
         return filenames
 
@@ -306,11 +338,11 @@ class S3Uploader(object):
         # Get the total count as a string, so we can find its length
         total = str(self.total)
         # Compose a format specifier using the length of the total
-        count = "{: " + str(len(total)) + "d}"
+        count = "{:" + str(len(total)) + "d}"
         # Format the count nicely with our specifier, which pads with spaces
         count = count.format(self.count)
         # Compose our whole line
-        line = count + "/" + total + " files copied"
+        line = count + "/" + total + " files uploaded"
 
         # Add the error count if we have one
         if self.errors:
@@ -321,7 +353,7 @@ class S3Uploader(object):
         line += " " * (int(os.environ.get('COLUMNS', 80)) - len(line) - 1)
 
         # Write the line to the stream, using \r to start us at the beginning
-        self.output.write('\r' + line + '\r')
+        self.output.write('\r' + line)
 
         # Flush the stream if that's possible
         if hasattr(self.output, 'flush'):
@@ -331,26 +363,10 @@ class S3Uploader(object):
 def sync_to_s3(directory, prefix, bucket, include=None, exclude=None,
         concurrency=1, output=None):
     """
-    Uploads `directory` to S3 with `prefix` to the key names in `bucket` and
-    return a list of failed filenames.
-
-    :param directory: Directory to sync
-    :param prefix: S3 key prefix
-    :param bucket: A :class:`S3Bucket` instance
-    :param exclude: List of filename regexes to exclude (optional)
-    :param include: List of filename regexes to include (optional)
-    :param concurrency: Number of concurrent uploads to use (default: 1)
-    :param output: File or stream to output progress to (optional)
-    :type directory: str
-    :type prefix: str
-    :type bucket: :class:`S3Bucket`
-    :type exclude: list
-    :type include: list
-    :type concurrency: int
-    :type output: file
+    This is a convenience wrapper around :class:`S3Uploader`.
 
     """
-    uploader = S3Uploader(directory, prefix, bucket, include, exclude,
-            concurrency, output)
+    uploader = S3Uploader(directory, prefix, bucket, include=include,
+            exclude=exclude, concurrency=concurrency, output=output)
     return uploader.upload()
 
