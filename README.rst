@@ -6,7 +6,8 @@ threads.
 
 The source is hosted at `<http://github.com/shakefu/s3peat/>`_.
 
-**Installing**:
+Installing
+^^^^^^^^^^
 
 s3peat can be installed from PyPI to get the latest release. If you'd like
 development code, you can check out the git repo.
@@ -21,7 +22,8 @@ development code, you can check out the git repo.
    cd s3peat
    python setup.py install
 
-**Command line usage**:
+Command line usage
+^^^^^^^^^^^^^^^^^^
 
 When installed via ``pip`` or ``python setup.py install``, a command called
 ``s3peat`` will be added. This command can be used to upload files easily.
