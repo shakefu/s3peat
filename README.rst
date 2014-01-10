@@ -83,6 +83,26 @@ including environment variables and the ``~/.boto`` config..
    aws_access_key_id = ABCDEFabcdef01234567
    aws_secret_access_key = ABCDEFabcdef0123456789ABCDEFabcdef012345
 
+
+Including and excluding files
+"""""""""""""""""""""""""""""
+
+Using the ``--include`` and ``--exclude`` (``-i`` or ``-e``) parameters, you
+can specify regex patterns to include or exclude from the list of files to be
+uploaded.
+
+These regexes are Python regexes, as applied by ``re.search()``, so if you want
+to match the beginning or end of a filename (including the directory), make
+sure to use the ``^`` or ``$`` metacharacters.
+
+These parameters can be specified multiple times, for example:
+
+.. code-block:: bash
+
+   # Upload all .txt and .py files, excluding the test directory
+   $ s3peat -b my-bucket -i '.txt$' -i '.py$' -e '^test/' .
+
+
 Python API
 ----------
 
