@@ -68,7 +68,7 @@ When installed via ``pip`` or ``python setup.py install``, a command called
     bucket = S3Bucket('my-bucket', AWS_KEY, AWS_SECRET)
 
     # Call the sync_to_s3 method
-    failures = sync_to_s3(directory='my/directory', prefix='my/key,
+    failures = sync_to_s3(directory='my/directory', prefix='my/key',
         bucket=bucket, concurrency=50)
 
     # A list of filenames will be returned if there were failures in uploading
