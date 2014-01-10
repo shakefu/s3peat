@@ -18,7 +18,7 @@ Example command usage
 
 .. code-block:: bash
    
-   s3peat -b aboutme-sandbox -p test1/assets -k KEY -s SECRET -c 25 -v .
+   s3peat -b my/bucket -p my/s3/key/prefix -k KEY -s SECRET -c 25 -v .
 
 
 Example API usage

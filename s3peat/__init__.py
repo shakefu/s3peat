@@ -32,7 +32,7 @@ from threading import Thread
 import boto
 
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 
 class S3Bucket(object):
