@@ -24,9 +24,8 @@ class Main(Command):
         self.opt('--prefix', '-p', metavar='', help="s3 key prefix")
         self.opt('--bucket', '-b', metavar='', required=True,
                 help="s3 bucket name")
-        self.opt('--key', '-k', metavar='', required=True, help="AWS key id")
-        self.opt('--secret', '-s', metavar='', required=True,
-                help="AWS secret")
+        self.opt('--key', '-k', metavar='', help="AWS key id")
+        self.opt('--secret', '-s', metavar='', help="AWS secret")
         self.opt('--concurrency', '-c', metavar='', type=int, default=1,
                 help="number of threads to use")
 
@@ -35,6 +34,9 @@ class Main(Command):
 
         self.opt('--include', '-i', action='append', type=self.regex,
                 metavar='', help="inclusion regex")
+
+        self.opt('--private', '-r', action='store_true',
+                help="do not set ACL public")
 
         self.opt('--dry-run', '-d', action='store_true',
                 help="print files matched and exit, do not upload")
@@ -73,7 +75,7 @@ class Main(Command):
         # If we've gotten here then we're actually uploading
         output = sys.stdout if a.verbose else None
         # Create our bucket so we can get connections to it later
-        bucket = s3peat.S3Bucket(a.bucket, a.key, a.secret)
+        bucket = s3peat.S3Bucket(a.bucket, a.key, a.secret, not a.private)
         # Create our uploader instance
         uploader = s3peat.S3Uploader(
                 directory=a.directory,

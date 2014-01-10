@@ -7,7 +7,7 @@ threads.
 The source is hosted at `<http://github.com/shakefu/s3peat/>`_.
 
 Installing
-^^^^^^^^^^
+----------
 
 s3peat can be installed from PyPI to get the latest release. If you'd like
 development code, you can check out the git repo.
@@ -15,20 +15,20 @@ development code, you can check out the git repo.
 .. code-block:: bash
 
    # Install from PyPI
-   pip install s3peat
+   $ pip install s3peat
 
    # Install from GitHub
-   git clone http://github.com/shakefu/s3peat.git
-   cd s3peat
-   python setup.py install
+   $ git clone http://github.com/shakefu/s3peat.git
+   $ cd s3peat
+   $ python setup.py install
 
 Command line usage
-^^^^^^^^^^^^^^^^^^
+------------------
 
 When installed via ``pip`` or ``python setup.py install``, a command called
 ``s3peat`` will be added. This command can be used to upload files easily.
 
-.. code-block:: bash
+.. code-block:: text
 
    $ s3peat --help
    usage: s3peat [--prefix] --bucket  --key  --secret  [--concurrency]
@@ -46,6 +46,7 @@ When installed via ``pip`` or ``python setup.py install``, a command called
      --concurrency , -c   number of threads to use
      --exclude , -e       exclusion regex
      --include , -i       inclusion regex
+     --private, -r        do not set ACL public
      --dry-run, -d        print files matched and exit, do not upload
      --verbose, -v        increase verbosity (-vvv means more verbose)
      --version            show program's version number and exit
@@ -55,10 +56,35 @@ When installed via ``pip`` or ``python setup.py install``, a command called
 
 .. code-block:: bash
 
-   s3peat -b my/bucket -p my/s3/key/prefix -k KEY -s SECRET -c 25 -v .
+   $ s3peat -b my/bucket -p my/s3/key/prefix -k KEY -s SECRET -c 25 -v .
 
+Configuring
+"""""""""""
 
-**Python API**:
+This library is based around `boto <http://docs.pythonboto.org/>`_. Your *AWS
+Access Key Id* and *AWS Secret Access Key* do not have to be passed on the
+command line - they may be configured using any method that boto supports,
+including environment variables and the ``~/.boto`` config..
+
+**Example using environment variables**:
+
+.. code-block:: bash
+
+   $ export AWS_ACCESS_KEY_ID=ABCDEFabcdef01234567
+   $ export AWS_SECRET_ACCESS_KEY=ABCDEFabcdef0123456789ABCDEFabcdef012345
+   $ s3peat -b my/bucket -p s3/prefix -c 25 some_dir/
+
+**Example ``~/.boto`` config**:
+
+.. code-block:: config
+
+   # File: ~/.boto
+   [Credentials]
+   aws_access_key_id = ABCDEFabcdef01234567
+   aws_secret_access_key = ABCDEFabcdef0123456789ABCDEFabcdef012345
+
+Python API
+----------
 
 **Example**:
 

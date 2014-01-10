@@ -63,7 +63,12 @@ class S3Bucket(object):
 
         """
         conn = boto.connect_s3(self.key, self.secret)
-        return conn.get_bucket(self.name)
+        try:
+            return conn.get_bucket(self.name)
+        except boto.exception.NoAuthHandlerFound:
+            print >>sys.stderr, ("AWS credentials not properly configured, "
+                    "please supply --key and --secret arguments.")
+            sys.exit(1)
 
     def __str__(self):
         return self.name
