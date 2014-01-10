@@ -12,6 +12,8 @@ class Main(Command):
     """
     s3peat console command.
 
+    See s3peat --help for more information.
+
     Example usage::
 
         s3peat -p some/key -b mybucket -k [AWS Key] -s [AWS Secret] my/dir/
@@ -45,7 +47,11 @@ class Main(Command):
         self.opt('directory', help="directory to be uploaded")
 
     def run(self):
-        """ Method that does all the running. """
+        """
+        Do option prep and verbosity triggering, and then either start the
+        dry run or the actual upload.
+
+        """
         a = self.args  # Shorthand
         if a.concurrency < 1:
             print >>sys.stderr, "Concurrency must be positive."
@@ -54,26 +60,41 @@ class Main(Command):
         if a.verbose > 2:
             logging.basicConfig()
             logging.getLogger().setLevel(1)
+            logging.getLogger('boto').setLevel(logging.INFO)
 
         if a.verbose > 3:
-            logging.getLogger('boto').setLevel(logging.INFO)
+            logging.getLogger('boto').setLevel(1)
 
         # If we have a dry run, do it
         if a.dry_run:
             self._dry_run()
-        else:
-            output = sys.stdout if a.verbose else None
-            bucket = s3peat.S3Bucket(a.bucket, a.key, a.secret)
-            uploader = s3peat.S3Uploader(a.directory, a.prefix, bucket,
-                    include=a.include, exclude=a.exclude,
-                    concurrency=a.concurrency, output=output)
-            filenames = uploader.upload()
-            if filenames:
-                print >>sys.stderr, "Error uploading files:"
-                print >>sys.stderr, "\n".join(filenames)
-                sys.exit(1)
+            # The dry run call exits the program when done
 
-            self.stop()
+        # If we've gotten here then we're actually uploading
+        output = sys.stdout if a.verbose else None
+        # Create our bucket so we can get connections to it later
+        bucket = s3peat.S3Bucket(a.bucket, a.key, a.secret)
+        # Create our uploader instance
+        uploader = s3peat.S3Uploader(
+                directory=a.directory,
+                prefix=a.prefix,
+                bucket=bucket,
+                include=a.include,
+                exclude=a.exclude,
+                concurrency=a.concurrency,
+                output=output)
+
+        # Start the upload
+        filenames = uploader.upload()
+
+        if filenames:
+            # If any files were returned, that means they failed to upload
+            print >>sys.stderr, "Error uploading files:"
+            print >>sys.stderr, "\n".join(filenames)
+            sys.exit(1)
+
+        # This call isn't really necessary, but whatevs
+        self.stop()
 
     def _dry_run(self):
         """
@@ -116,6 +137,7 @@ class Main(Command):
         except Exception, exc:
             print >>sys.stderr, "Error connecting to S3 bucket {!r}.".format(
                     a.bucket)
+
             if a.verbose > 1:
                 print >>sys.stderr, '   ', '\n    '.join(repr(exc).split('\n'))
             elif a.verbose:
@@ -129,6 +151,7 @@ class Main(Command):
         self.stop()
 
     def regex(self, value):
+        """ Helper for regex types on the command line. """
         try:
             return re.compile(value)
         except:
