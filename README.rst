@@ -4,7 +4,7 @@ s3peat
 s3peat is a Python module to help upload directories to S3 using parallel
 threads.
 
-The source is hosted at `http://github.com/shakefu/s3peat/`_.
+The source is hosted at `<http://github.com/shakefu/s3peat/>`_.
 
 Installing
 ----------
