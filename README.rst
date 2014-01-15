@@ -7,7 +7,7 @@ threads.
 The source is hosted at `<http://github.com/shakefu/s3peat/>`_.
 
 .. |s3peat| image:: http://shakefu.s3.amazonaws.com/s3peat/s3peat.jpg
-   :align: bottom
+   :align: right
 
 
 Installing
