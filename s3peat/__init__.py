@@ -127,7 +127,12 @@ class S3Queue(Thread):
         bucket = self.bucket.get_new()
         # Iterate over the filenames attempting to upload them
         while self.filenames:
-            self._upload(self.filenames.pop(), bucket)
+            # We need to peek at and upload the last filename
+            self._upload(self.filenames[-1], bucket)
+            # We don't pop off the list until after the filename is finished
+            # uploading or has failed, otherwise the program will exit early
+            self.filenames.pop()
+
 
     def _upload(self, filename, bucket):
         """
