@@ -1,12 +1,10 @@
 s3peat
 ======
 
-s3peat is a Python module to help upload directories to S3 using parallel
+|s3peat| s3peat is a Python module to help upload directories to S3 using parallel
 threads.
 
 The source is hosted at `<http://github.com/shakefu/s3peat/>`_.
-
-|s3peat|
 
 .. |s3peat| image:: http://shakefu.s3.amazonaws.com/s3peat/s3peat.jpg
    :align: bottom
