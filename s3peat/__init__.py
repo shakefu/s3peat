@@ -30,6 +30,7 @@ import logging
 from threading import Thread
 
 import boto
+from boto.exception import NoAuthHandlerFound
 
 
 __version__ = '0.3.1'
@@ -65,7 +66,7 @@ class S3Bucket(object):
         conn = boto.connect_s3(self.key, self.secret)
         try:
             return conn.get_bucket(self.name)
-        except boto.exception.NoAuthHandlerFound:
+        except NoAuthHandlerFound:
             print >>sys.stderr, ("AWS credentials not properly configured, "
                     "please supply --key and --secret arguments.")
             sys.exit(1)
