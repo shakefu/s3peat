@@ -33,7 +33,7 @@ import boto
 from boto.exception import NoAuthHandlerFound
 
 
-__version__ = '0.4.5'
+__version__ = '0.4.6'
 
 
 class S3Bucket(object):
@@ -117,7 +117,7 @@ class S3Queue(Thread):
         super(S3Queue, self).__init__(**kwargs)
 
         self.log = logging.getLogger(self.name)
-        self.prefix = prefix.strip('/')
+        self.prefix = (prefix or '').strip('/')
         self.filenames = filenames
         self.failed = []
         self.bucket = bucket
@@ -235,8 +235,13 @@ class S3Uploader(object):
         # Set up the signal catcher so Ctrl+C works
         signal.signal(signal.SIGINT, self.stop)
 
+        # Make sure the directory actually exists
         if not os.path.exists(self.directory):
             raise IOError("Directory %r does not exist." % self.directory)
+
+        # Make sure the bucket is configured
+        if not self.bucket.get_new():
+            return
 
         # Get all the files
         filenames = self.get_filenames(split=True)
