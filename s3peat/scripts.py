@@ -22,7 +22,7 @@ class Main(Command):
     def set_opts(self):
         """ Configure command line options. """
         self.opt('--prefix', '-p', metavar='', help="s3 key prefix")
-        self.opt('--bucket', '-b', metavar='', required=True,
+        self.opt('--bucket', '-b', metavar='BUCKET', required=True,
                 help="s3 bucket name")
         self.opt('--key', '-k', metavar='', help="AWS key id")
         self.opt('--secret', '-s', metavar='', help="AWS secret")
