@@ -86,8 +86,12 @@ class Main(Command):
                 concurrency=a.concurrency,
                 output=output)
 
-        # Start the upload
-        filenames = uploader.upload()
+        try:
+            # Start the upload
+            filenames = uploader.upload()
+        except IOError, exc:
+            print >>sys.stderr, str(exc)
+            sys.exit(1)
 
         if filenames:
             # If any files were returned, that means they failed to upload
