@@ -179,8 +179,8 @@ class S3Queue(Thread):
         if self.strip_path and filename.startswith(self.strip_path):
             filename = filename[len(self.strip_path):]
 
-        # Strip the filename of leading slashies
-        filename = filename.lstrip('/')
+        # Strip the filename of leading path separators
+        filename = filename.lstrip(os.path.sep)
         # Join it to the prefix and go!
         return '/'.join((self.prefix, filename))
 
