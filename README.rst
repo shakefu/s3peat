@@ -199,3 +199,20 @@ questions, you can open a github issue. Here's an example anyway.
         print "Failed:", failures
 
 
+Changelog
+---------
+
+0.4.7
+-----
+
+* Better support for Windows. Thanks to `kevinschaul
+  <https://github.com/kevinschaul>`_.
+
+*Released November 20th, 2014*.
+
+Contributors
+------------
+
+* `shakefu <http://github.com/shakefu>`_ - Creator, maintainer
+* `kevinschaul <https://github.com/kevinschaul>`_
+
