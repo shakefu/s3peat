@@ -209,7 +209,7 @@ class S3Uploader(object):
 
     """
     def __init__(self, directory, prefix, bucket, include=None, exclude=None,
-            concurrency=1, output=None):
+            concurrency=1, output=None, handle_signals=True):
         self.directory = directory
         self.prefix = prefix
         self.bucket = bucket
@@ -217,6 +217,7 @@ class S3Uploader(object):
         self.exclude = exclude
         self.concurrency = concurrency
         self.output = output
+        self.handle_signals = handle_signals
         self.total = 0
         self.count = 0
         self.errors = 0
@@ -232,8 +233,9 @@ class S3Uploader(object):
         self.errors = 0
         self.queues = []
 
-        # Set up the signal catcher so Ctrl+C works
-        signal.signal(signal.SIGINT, self.stop)
+        if self.handle_signals:
+            # Set up the signal catcher so Ctrl+C works
+            signal.signal(signal.SIGINT, self.stop)
 
         # Make sure the directory actually exists
         if not os.path.exists(self.directory):
@@ -381,12 +383,13 @@ class S3Uploader(object):
 
 
 def sync_to_s3(directory, prefix, bucket, include=None, exclude=None,
-        concurrency=1, output=None):
+        concurrency=1, output=None, handle_signals=True):
     """
     This is a convenience wrapper around :class:`S3Uploader`.
 
     """
     uploader = S3Uploader(directory, prefix, bucket, include=include,
-            exclude=exclude, concurrency=concurrency, output=output)
+            exclude=exclude, concurrency=concurrency, output=output,
+            handle_signals=handle_signals)
     return uploader.upload()
 
