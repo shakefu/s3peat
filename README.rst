@@ -208,11 +208,15 @@ Changelog
 * Use posixpath.sep for upload keys. Thanks to `kevinschaul
   <https://github.com/kevinschaul>`_.
 
+*Released February 4th, 2015*.
+
 0.5.0
 -----
 
 * Make attaching signal handlers optional. Thanks to `kevinschaul
   <https://github.com/kevinschaul>`_.
+
+*Released December 1st, 2014*.
 
 0.4.7
 -----
