@@ -202,6 +202,12 @@ questions, you can open a github issue. Here's an example anyway.
 Changelog
 ---------
 
+0.5.1
+-----
+
+* Use posixpath.sep for upload keys. Thanks to `kevinschaul
+  <https://github.com/kevinschaul>`_.
+
 0.5.0
 -----
 
