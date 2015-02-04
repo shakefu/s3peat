@@ -23,6 +23,7 @@ s3peat - Fast uploading directories to S3
 
 """
 import os
+import posixpath
 import sys
 import time
 import signal
@@ -181,6 +182,8 @@ class S3Queue(Thread):
 
         # Strip the filename of leading path separators
         filename = filename.lstrip(os.path.sep)
+        # Replace path separators with posix separator
+        filename = filename.replace(os.path.sep, posixpath.sep)
         # Join it to the prefix and go!
         return '/'.join((self.prefix, filename))
 
