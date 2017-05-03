@@ -23,6 +23,9 @@ s3peat - Fast uploading directories to S3
 
 """
 from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 import os
 import posixpath
 import sys
@@ -330,8 +333,8 @@ class S3Uploader(object):
                 self.total += 1
 
         if split:
-            groups = [list() for i in xrange(self.concurrency)]
-            for i in xrange(len(filenames)):
+            groups = [list() for i in range(self.concurrency)]
+            for i in range(len(filenames)):
                 groups[i % self.concurrency].append(filenames[i])
             filenames = groups
 
