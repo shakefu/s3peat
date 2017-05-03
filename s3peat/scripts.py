@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import re
 import sys
@@ -56,7 +57,7 @@ class Main(Command):
         """
         a = self.args  # Shorthand
         if a.concurrency < 1:
-            print >>sys.stderr, "Concurrency must be positive."
+            print("Concurrency must be positive.", file=sys.stderr)
             sys.exit(1)
 
         if a.verbose > 2:
@@ -89,14 +90,14 @@ class Main(Command):
         try:
             # Start the upload
             filenames = uploader.upload()
-        except IOError, exc:
-            print >>sys.stderr, str(exc)
+        except IOError as exc:
+            print(str(exc), file=sys.stderr)
             sys.exit(1)
 
         if filenames:
             # If any files were returned, that means they failed to upload
-            print >>sys.stderr, "Error uploading files:"
-            print >>sys.stderr, "\n".join(filenames)
+            print("Error uploading files:", file=sys.stderr)
+            print("\n".join(filenames), file=sys.stderr)
             sys.exit(1)
 
         # This call isn't really necessary, but whatevs
@@ -113,9 +114,9 @@ class Main(Command):
         """
         a = self.args  # Shorthand
         if a.verbose > 1:
-            print "Finding files in {} ...".format(
-                    os.path.realpath(a.directory))
-            print
+            print("Finding files in {} ...".format(
+                    os.path.realpath(a.directory)))
+            print()
 
         # Use a dummy bucket and uploader to get the file names
         bucket = None
@@ -124,35 +125,35 @@ class Main(Command):
         filenames = uploader.get_filenames()
 
         if a.verbose > 1:
-            print '\n'.join(filenames)
-            print
+            print('\n'.join(filenames))
+            print()
 
         if filenames:
-            print "{} files found.".format(uploader.total)
+            print("{} files found.".format(uploader.total))
         else:
-            print >>sys.stderr, "No files found."
+            print("No files found.", file=sys.stderr)
             sys.exit(1)
 
         if a.verbose > 1:
-            print
+            print()
 
         # Test the connection to S3
         bucket = s3peat.S3Bucket(a.bucket, a.key, a.secret)
         try:
             bucket.get_new()
-        except Exception, exc:
-            print >>sys.stderr, "Error connecting to S3 bucket {!r}.".format(
-                    a.bucket)
+        except Exception as exc:
+            print("Error connecting to S3 bucket {!r}.".format(
+                    a.bucket), file=sys.stderr)
 
             if a.verbose > 1:
-                print >>sys.stderr, '   ', '\n    '.join(repr(exc).split('\n'))
+                print('   ', '\n    '.join(repr(exc).split('\n')), file=sys.stderr)
             elif a.verbose:
-                print >>sys.stderr, '   ', repr(exc).split('\n')[0]
+                print('   ', repr(exc).split('\n')[0], file=sys.stderr)
 
             sys.exit(1)
         else:
             if a.verbose:
-                print "Connected to S3 bucket {!r} OK.".format(a.bucket)
+                print("Connected to S3 bucket {!r} OK.".format(a.bucket))
 
         self.stop()
 
