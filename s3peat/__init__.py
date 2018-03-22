@@ -22,6 +22,10 @@ s3peat - Fast uploading directories to S3
 
 
 """
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 import os
 import posixpath
 import sys
@@ -68,8 +72,8 @@ class S3Bucket(object):
         try:
             return conn.get_bucket(self.name)
         except NoAuthHandlerFound:
-            print >>sys.stderr, ("AWS credentials not properly configured, "
-                    "please supply --key and --secret arguments.")
+            print(("AWS credentials not properly configured, "
+                    "please supply --key and --secret arguments."), file=sys.stderr)
             sys.exit(1)
 
     def __str__(self):
@@ -283,8 +287,8 @@ class S3Uploader(object):
         which means the current files will finish.
 
         """
-        print >>sys.stderr, "                                                 "
-        print >>sys.stderr, "Stopping...                                      "
+        print("                                                 ", file=sys.stderr)
+        print("Stopping...                                      ", file=sys.stderr)
         for queue in self.queues:
             queue.filenames = []
         sys.exit(1)
@@ -329,8 +333,8 @@ class S3Uploader(object):
                 self.total += 1
 
         if split:
-            groups = [list() for i in xrange(self.concurrency)]
-            for i in xrange(len(filenames)):
+            groups = [list() for i in range(self.concurrency)]
+            for i in range(len(filenames)):
                 groups[i % self.concurrency].append(filenames[i])
             filenames = groups
 
