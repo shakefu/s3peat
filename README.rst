@@ -202,6 +202,16 @@ questions, you can open a github issue. Here's an example anyway.
 Changelog
 ---------
 
+1.0.0
+-----
+
+* Drops support for Python 2.x (use version `<1` if you need to continue to use
+  Python 2.)
+* Adds support for Python 3.x (tested against 3.4, should work for any later
+  version as well).
+* Thanks go to `aboutaaron <https://github.com/aboutaaron>`_ for the Python 3
+  support.
+
 0.5.1
 -----
 
