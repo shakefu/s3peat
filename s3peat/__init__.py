@@ -38,7 +38,7 @@ import boto
 from boto.exception import NoAuthHandlerFound
 
 
-__version__ = '0.4.6'
+__version__ = '1.0.0'
 
 
 class S3Bucket(object):
