@@ -63,22 +63,22 @@ optional arguments:
 **Example**:
 
 ```bash
-$ s3peat -b my/bucket -p my/s3/key/prefix -k KEY -s SECRET my-dir/
+s3peat -b my/bucket -p my/s3/key/prefix -k KEY -s SECRET my-dir/
 ```
 
 ### Configuring
 
-This library is based around [boto](http://docs.pythonboto.org/). Your *AWS
-Access Key Id* and *AWS Secret Access Key* do not have to be passed on the
+This library is based around [boto](http://docs.pythonboto.org/). Your _AWS
+Access Key Id_ and _AWS Secret Access Key_ do not have to be passed on the
 command line - they may be configured using any method that boto supports,
 including environment variables and the `~/.boto` config.
 
 **Example using environment variables**:
 
 ```bash
-$ export AWS_ACCESS_KEY_ID=ABCDEFabcdef01234567
-$ export AWS_SECRET_ACCESS_KEY=ABCDEFabcdef0123456789ABCDEFabcdef012345
-$ s3peat -b my/bucket -p s3/prefix -c 25 some_dir/
+export AWS_ACCESS_KEY_ID=ABCDEFabcdef01234567
+export AWS_SECRET_ACCESS_KEY=ABCDEFabcdef0123456789ABCDEFabcdef012345
+s3peat -b my/bucket -p s3/prefix -c 25 some_dir/
 ```
 
 **Example `~/.boto` config**:
@@ -168,9 +168,9 @@ the `time` command.
 $ time s3peat -b my-bucket -p my/key/ --concurrency 50 my-dir/
 271/271 files uploaded
 
-real	0m2.909s
-user	0m0.488s
-sys	0m0.114s
+real 0m2.909s
+user 0m0.488s
+sys 0m0.114s
 ```
 
 ## Python API
@@ -212,19 +212,19 @@ else:
 
 - Use posixpath.sep for upload keys. Thanks to [kevinschaul](https://github.com/kevinschaul).
 
-*Released February 4th, 2015*.
+_Released February 4th, 2015_.
 
 ### 0.5.0
 
 - Make attaching signal handlers optional. Thanks to [kevinschaul](https://github.com/kevinschaul).
 
-*Released December 1st, 2014*.
+_Released December 1st, 2014_.
 
 ### 0.4.7
 
 - Better support for Windows. Thanks to [kevinschaul](https://github.com/kevinschaul).
 
-*Released November 20th, 2014*.
+_Released November 20th, 2014_.
 
 ## Contributors
 

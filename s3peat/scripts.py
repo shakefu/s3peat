@@ -1,9 +1,10 @@
 from __future__ import print_function
-from builtins import str
+
+import logging
 import os
 import re
 import sys
-import logging
+from builtins import str
 
 from pytool.cmd import Command
 
@@ -21,34 +22,62 @@ class Main(Command):
         s3peat -p some/key -b mybucket -k [AWS Key] -s [AWS Secret] my/dir/
 
     """
+
     def set_opts(self):
-        """ Configure command line options. """
-        self.opt('--prefix', '-p', metavar='', help="s3 key prefix")
-        self.opt('--bucket', '-b', metavar='BUCKET', required=True,
-                help="s3 bucket name")
-        self.opt('--key', '-k', metavar='', help="AWS key id")
-        self.opt('--secret', '-s', metavar='', help="AWS secret")
-        self.opt('--concurrency', '-c', metavar='', type=int, default=1,
-                help="number of threads to use")
+        """Configure command line options."""
+        self.opt("--prefix", "-p", metavar="", help="s3 key prefix")
+        self.opt(
+            "--bucket", "-b", metavar="BUCKET", required=True, help="s3 bucket name"
+        )
+        self.opt("--key", "-k", metavar="", help="AWS key id")
+        self.opt("--secret", "-s", metavar="", help="AWS secret")
+        self.opt(
+            "--concurrency",
+            "-c",
+            metavar="",
+            type=int,
+            default=1,
+            help="number of threads to use",
+        )
 
-        self.opt('--exclude', '-e', action='append', type=self.regex,
-                metavar='', help="exclusion regex")
+        self.opt(
+            "--exclude",
+            "-e",
+            action="append",
+            type=self.regex,
+            metavar="",
+            help="exclusion regex",
+        )
 
-        self.opt('--include', '-i', action='append', type=self.regex,
-                metavar='', help="inclusion regex")
+        self.opt(
+            "--include",
+            "-i",
+            action="append",
+            type=self.regex,
+            metavar="",
+            help="inclusion regex",
+        )
 
-        self.opt('--private', '-r', action='store_true',
-                help="do not set ACL public")
+        self.opt("--private", "-r", action="store_true", help="do not set ACL public")
 
-        self.opt('--dry-run', '-d', action='store_true',
-                help="print files matched and exit, do not upload")
+        self.opt(
+            "--dry-run",
+            "-d",
+            action="store_true",
+            help="print files matched and exit, do not upload",
+        )
 
-        self.opt('--verbose', '-v', action='count', default=0,
-                help="increase verbosity (-vvv means more verbose) ")
+        self.opt(
+            "--verbose",
+            "-v",
+            action="count",
+            default=0,
+            help="increase verbosity (-vvv means more verbose) ",
+        )
 
-        self.opt('--version', action='version', version=s3peat.__version__)
+        self.opt("--version", action="version", version=s3peat.__version__)
 
-        self.opt('directory', help="directory to be uploaded")
+        self.opt("directory", help="directory to be uploaded")
 
     def run(self):
         """
@@ -64,10 +93,10 @@ class Main(Command):
         if a.verbose > 2:
             logging.basicConfig()
             logging.getLogger().setLevel(1)
-            logging.getLogger('boto').setLevel(logging.INFO)
+            logging.getLogger("boto").setLevel(logging.INFO)
 
         if a.verbose > 3:
-            logging.getLogger('boto').setLevel(1)
+            logging.getLogger("boto").setLevel(1)
 
         # If we have a dry run, do it
         if a.dry_run:
@@ -80,13 +109,14 @@ class Main(Command):
         bucket = s3peat.S3Bucket(a.bucket, a.key, a.secret, not a.private)
         # Create our uploader instance
         uploader = s3peat.S3Uploader(
-                directory=a.directory,
-                prefix=a.prefix,
-                bucket=bucket,
-                include=a.include,
-                exclude=a.exclude,
-                concurrency=a.concurrency,
-                output=output)
+            directory=a.directory,
+            prefix=a.prefix,
+            bucket=bucket,
+            include=a.include,
+            exclude=a.exclude,
+            concurrency=a.concurrency,
+            output=output,
+        )
 
         try:
             # Start the upload
@@ -115,18 +145,18 @@ class Main(Command):
         """
         a = self.args  # Shorthand
         if a.verbose > 1:
-            print("Finding files in {} ...".format(
-                    os.path.realpath(a.directory)))
+            print("Finding files in {} ...".format(os.path.realpath(a.directory)))
             print()
 
         # Use a dummy bucket and uploader to get the file names
         bucket = None
-        uploader = s3peat.S3Uploader(a.directory, a.prefix, bucket,
-                include=a.include, exclude=a.exclude)
+        uploader = s3peat.S3Uploader(
+            a.directory, a.prefix, bucket, include=a.include, exclude=a.exclude
+        )
         filenames = uploader.get_filenames()
 
         if a.verbose > 1:
-            print('\n'.join(filenames))
+            print("\n".join(filenames))
             print()
 
         if filenames:
@@ -143,13 +173,14 @@ class Main(Command):
         try:
             bucket.get_new()
         except Exception as exc:
-            print("Error connecting to S3 bucket {!r}.".format(
-                    a.bucket), file=sys.stderr)
+            print(
+                "Error connecting to S3 bucket {!r}.".format(a.bucket), file=sys.stderr
+            )
 
             if a.verbose > 1:
-                print('   ', '\n    '.join(repr(exc).split('\n')), file=sys.stderr)
+                print("   ", "\n    ".join(repr(exc).split("\n")), file=sys.stderr)
             elif a.verbose:
-                print('   ', repr(exc).split('\n')[0], file=sys.stderr)
+                print("   ", repr(exc).split("\n")[0], file=sys.stderr)
 
             sys.exit(1)
         else:
@@ -159,10 +190,8 @@ class Main(Command):
         self.stop()
 
     def regex(self, value):
-        """ Helper for regex types on the command line. """
+        """Helper for regex types on the command line."""
         try:
             return re.compile(value)
-        except:
+        except Exception:
             raise ValueError
-
-
