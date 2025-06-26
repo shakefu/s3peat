@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "s3peat"
@@ -37,8 +37,8 @@ Issues = "http://github.com/shakefu/s3peat/issues"
 [project.scripts]
 s3peat = "s3peat.scripts:Main.console_script"
 
-[tool.setuptools.packages.find]
-exclude = ["test*"]
+[tool.setuptools]
+packages = ["s3peat"]
 
 [tool.uv]
 dev-dependencies = []
