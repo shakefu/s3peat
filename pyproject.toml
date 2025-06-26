@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "s3peat"
+version = "1.0.0"
+description = "Fast uploader to S3"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Jacob Alheid", email = "shakefu@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "boto",
+    "pytool",
+]
+
+[project.urls]
+Homepage = "http://github.com/shakefu/s3peat"
+Repository = "http://github.com/shakefu/s3peat"
+Issues = "http://github.com/shakefu/s3peat/issues"
+
+[project.scripts]
+s3peat = "s3peat.scripts:Main.console_script"
+
+[tool.setuptools.packages.find]
+exclude = ["test*"]
+
+[tool.uv]
+dev-dependencies = []
