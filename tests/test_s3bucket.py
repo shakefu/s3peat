@@ -30,7 +30,7 @@ def test_s3bucket_initialization_defaults():
     assert bucket.name == "test-bucket"
     assert bucket.key == "test-key"
     assert bucket.secret == "test-secret"
-    assert bucket.public == True
+    assert bucket.public
 
 
 def test_s3bucket_str_representation(s3_bucket_config):

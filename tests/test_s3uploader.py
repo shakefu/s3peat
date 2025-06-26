@@ -34,7 +34,7 @@ def test_s3uploader_initialization(s3_bucket_config, temp_directory):
     assert len(uploader.exclude) == 1
     assert uploader.concurrency == 5
     assert uploader.output == sys.stdout
-    assert uploader.handle_signals == False
+    assert not uploader.handle_signals
     assert uploader.total == 0
     assert uploader.count == 0
     assert uploader.errors == 0
@@ -51,7 +51,7 @@ def test_s3uploader_initialization_defaults(s3_bucket_config, temp_directory):
     assert uploader.exclude is None
     assert uploader.concurrency == 1
     assert uploader.output is None
-    assert uploader.handle_signals == True
+    assert uploader.handle_signals
 
 
 def test_get_filenames_no_filters(temp_directory, s3_bucket_config):
@@ -292,7 +292,7 @@ def test_upload_successful(mock_sleep, mock_boto_s3, s3_bucket_config, temp_dire
     uploader = S3Uploader(temp_directory, "prefix", bucket, concurrency=2)
 
     # Mock the queues to simulate completion
-    with patch.object(uploader, "counter") as mock_counter:
+    with patch.object(uploader, "counter"):
         result = uploader.upload()
 
     # Should return empty list for no failures
@@ -303,7 +303,7 @@ def test_upload_successful(mock_sleep, mock_boto_s3, s3_bucket_config, temp_dire
 
     # All queues should be daemon threads
     for queue in uploader.queues:
-        assert queue.daemon == True
+        assert queue.daemon
 
 
 def test_upload_with_signal_handling(mock_boto_s3, s3_bucket_config, temp_directory):

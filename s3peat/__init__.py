@@ -22,23 +22,22 @@ s3peat - Fast uploading directories to S3
 
 
 """
+
 from __future__ import print_function
-from builtins import str
-from builtins import range
-from builtins import object
+
+import logging
 import os
 import posixpath
+import signal
 import sys
 import time
-import signal
-import logging
+from builtins import object, range, str
 from threading import Thread
 
 import boto
 from boto.exception import NoAuthHandlerFound
 
-
-__version__ = '1.0.0'
+__version__ = "1.0.0"
 
 
 class S3Bucket(object):
@@ -57,6 +56,7 @@ class S3Bucket(object):
     :type aws_secret: str
 
     """
+
     def __init__(self, name, key, secret, public=True):
         self.name = name
         self.key = key
@@ -72,8 +72,13 @@ class S3Bucket(object):
         try:
             return conn.get_bucket(self.name)
         except NoAuthHandlerFound:
-            print(("AWS credentials not properly configured, "
-                    "please supply --key and --secret arguments."), file=sys.stderr)
+            print(
+                (
+                    "AWS credentials not properly configured, "
+                    "please supply --key and --secret arguments."
+                ),
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     def __str__(self):
@@ -113,23 +118,24 @@ class S3Queue(Thread):
     other threads, as that would not be thread-safe.
 
     """
+
     def __init__(self, prefix, filenames, bucket, strip_path=None, **kwargs):
         # Get the counting callback if it's set
-        self.counter = kwargs.pop('counter', None)
+        self.counter = kwargs.pop("counter", None)
 
-        kwargs.setdefault('name', "S3Queue.{}:{}".format(bucket, id(self)))
+        kwargs.setdefault("name", "S3Queue.{}:{}".format(bucket, id(self)))
 
         super(S3Queue, self).__init__(**kwargs)
 
         self.log = logging.getLogger(self.name)
-        self.prefix = (prefix or '').strip('/')
+        self.prefix = (prefix or "").strip("/")
         self.filenames = filenames
         self.failed = []
         self.bucket = bucket
         self.strip_path = strip_path
 
     def run(self):
-        """ Run method for the threading API. """
+        """Run method for the threading API."""
         bucket = self.bucket.get_new()
         # Iterate over the filenames attempting to upload them
         while self.filenames:
@@ -138,7 +144,6 @@ class S3Queue(Thread):
             # We don't pop off the list until after the filename is finished
             # uploading or has failed, otherwise the program will exit early
             self.filenames.pop()
-
 
     def _upload(self, filename, bucket):
         """
@@ -159,10 +164,10 @@ class S3Queue(Thread):
 
             # Set the access for this key
             if self.bucket.public:
-                s3key.set_acl('public-read')
+                s3key.set_acl("public-read")
             else:
-                s3key.set_acl('authenticated-read')
-        except:
+                s3key.set_acl("authenticated-read")
+        except Exception:
             self.log.debug("Failed %r", key, exc_info=True)
             self.failed.append(filename)
             if self.counter:
@@ -182,14 +187,14 @@ class S3Queue(Thread):
         """
         # Remove the leading path if necessary
         if self.strip_path and filename.startswith(self.strip_path):
-            filename = filename[len(self.strip_path):]
+            filename = filename[len(self.strip_path) :]
 
         # Strip the filename of leading path separators
         filename = filename.lstrip(os.path.sep)
         # Replace path separators with posix separator
         filename = filename.replace(os.path.sep, posixpath.sep)
         # Join it to the prefix and go!
-        return '/'.join((self.prefix, filename))
+        return "/".join((self.prefix, filename))
 
     def __str__(self):
         return self.name
@@ -215,8 +220,18 @@ class S3Uploader(object):
     :type output: file
 
     """
-    def __init__(self, directory, prefix, bucket, include=None, exclude=None,
-            concurrency=1, output=None, handle_signals=True):
+
+    def __init__(
+        self,
+        directory,
+        prefix,
+        bucket,
+        include=None,
+        exclude=None,
+        concurrency=1,
+        output=None,
+        handle_signals=True,
+    ):
         self.directory = directory
         self.prefix = prefix
         self.bucket = bucket
@@ -229,7 +244,7 @@ class S3Uploader(object):
         self.count = 0
         self.errors = 0
         self.queues = []
-        self.log = logging.getLogger('S3Uploader')
+        self.log = logging.getLogger("S3Uploader")
 
     def upload(self):
         """
@@ -257,8 +272,9 @@ class S3Uploader(object):
 
         # Start a queue with each group of files
         for queue in filenames:
-            queue = S3Queue(self.prefix, queue, self.bucket, self.directory,
-                    counter=self.counter)
+            queue = S3Queue(
+                self.prefix, queue, self.bucket, self.directory, counter=self.counter
+            )
             self.queues.append(queue)
             queue.daemon = True
             queue.start()
@@ -275,7 +291,7 @@ class S3Uploader(object):
             failures.extend(queue.failed)
 
         if self.output:
-            self.output.write('\n')
+            self.output.write("\n")
 
         return failures
 
@@ -375,28 +391,41 @@ class S3Uploader(object):
 
         # Add the error count if we have one
         if self.errors:
-            line += " ({} error{})".format(self.errors,
-                    self.errors > 1 and 's' or '')
+            line += " ({} error{})".format(self.errors, self.errors > 1 and "s" or "")
 
         # Add spacing to blot out the rest of the line
-        line += " " * (int(os.environ.get('COLUMNS', 80)) - len(line) - 1)
+        line += " " * (int(os.environ.get("COLUMNS", 80)) - len(line) - 1)
 
         # Write the line to the stream, using \r to start us at the beginning
-        self.output.write('\r' + line)
+        self.output.write("\r" + line)
 
         # Flush the stream if that's possible
-        if hasattr(self.output, 'flush'):
+        if hasattr(self.output, "flush"):
             self.output.flush()
 
 
-def sync_to_s3(directory, prefix, bucket, include=None, exclude=None,
-        concurrency=1, output=None, handle_signals=True):
+def sync_to_s3(
+    directory,
+    prefix,
+    bucket,
+    include=None,
+    exclude=None,
+    concurrency=1,
+    output=None,
+    handle_signals=True,
+):
     """
     This is a convenience wrapper around :class:`S3Uploader`.
 
     """
-    uploader = S3Uploader(directory, prefix, bucket, include=include,
-            exclude=exclude, concurrency=concurrency, output=output,
-            handle_signals=handle_signals)
+    uploader = S3Uploader(
+        directory,
+        prefix,
+        bucket,
+        include=include,
+        exclude=exclude,
+        concurrency=concurrency,
+        output=output,
+        handle_signals=handle_signals,
+    )
     return uploader.upload()
-
