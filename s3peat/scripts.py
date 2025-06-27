@@ -75,7 +75,7 @@ class Main(Command):
             help="increase verbosity (-vvv means more verbose) ",
         )
 
-        self.opt("--version", action="version", version=s3peat.__version__)
+        self.opt("--version", action="version", version=s3peat.version())
 
         self.opt("directory", help="directory to be uploaded")
 
