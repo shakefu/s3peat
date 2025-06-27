@@ -5,6 +5,10 @@ threads.
 
 The source is hosted at [http://github.com/shakefu/s3peat/](http://github.com/shakefu/s3peat/).
 
+[![CI](https://github.com/shakefu/s3peat/workflows/CI/badge.svg)](https://github.com/shakefu/s3peat/actions)
+[![Coverage Status](https://coveralls.io/repos/github/shakefu/s3peat/badge.svg?branch=main)](https://coveralls.io/github/shakefu/s3peat?branch=main)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/shakefu)](https://github.com/sponsors/shakefu)
+
 ![s3peat](http://shakefu.s3.amazonaws.com/s3peat/s3peat.jpg)
 
 ## Quick Start
