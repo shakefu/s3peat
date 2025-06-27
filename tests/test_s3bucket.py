@@ -2,8 +2,8 @@
 Tests for the S3Bucket class.
 """
 
+import botocore.exceptions
 import pytest
-from boto.exception import NoAuthHandlerFound
 
 from s3peat import S3Bucket
 
@@ -50,26 +50,31 @@ def test_get_new_successful_connection(mock_boto_s3, s3_bucket_config):
 
     result = bucket.get_new()
 
-    # Verify boto was called with correct credentials
-    import boto
+    # Verify boto3.resource was called with correct credentials
+    import boto3
 
-    boto.connect_s3.assert_called_once_with(
-        s3_bucket_config["key"], s3_bucket_config["secret"]
+    boto3.resource.assert_called_once_with(
+        "s3",
+        aws_access_key_id=s3_bucket_config["key"],
+        aws_secret_access_key=s3_bucket_config["secret"],
     )
 
-    # Verify get_bucket was called with correct bucket name
-    mock_boto_s3["conn"].get_bucket.assert_called_once_with(s3_bucket_config["name"])
+    # Verify Bucket was called with correct bucket name
+    mock_boto_s3["resource"].Bucket.assert_called_once_with(s3_bucket_config["name"])
+
+    # Verify head_bucket was called to check bucket access
+    mock_boto_s3["client"].head_bucket.assert_called_once_with(
+        Bucket=s3_bucket_config["name"]
+    )
 
     # Should return the mocked bucket
     assert result == mock_boto_s3["bucket"]
 
 
-def test_get_new_no_auth_handler(mocker, s3_bucket_config, capsys):
-    """Test handling of NoAuthHandlerFound exception."""
-    # Mock boto.connect_s3
-    mock_conn = mocker.Mock()
-    mock_conn.get_bucket.side_effect = NoAuthHandlerFound()
-    mocker.patch("boto.connect_s3", return_value=mock_conn)
+def test_get_new_no_credentials(mocker, s3_bucket_config, capsys):
+    """Test handling of NoCredentialsError exception."""
+    # Mock boto3.resource to raise NoCredentialsError
+    mocker.patch("boto3.resource", side_effect=botocore.exceptions.NoCredentialsError())
 
     bucket = S3Bucket(
         s3_bucket_config["name"], s3_bucket_config["key"], s3_bucket_config["secret"]

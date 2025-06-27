@@ -34,8 +34,8 @@ import time
 from builtins import object, range, str
 from threading import Thread
 
-import boto
-from boto.exception import NoAuthHandlerFound
+import boto3
+import botocore.exceptions
 
 __version__ = "1.0.0"
 
@@ -65,13 +65,18 @@ class S3Bucket(object):
 
     def get_new(self):
         """
-        Return a new :class:`boto.s3.bucket.Bucket` with its own connection.
+        Return a new S3 bucket resource with its own connection.
 
         """
-        conn = boto.connect_s3(self.key, self.secret)
         try:
-            return conn.get_bucket(self.name)
-        except NoAuthHandlerFound:
+            s3 = boto3.resource(
+                "s3", aws_access_key_id=self.key, aws_secret_access_key=self.secret
+            )
+            bucket = s3.Bucket(self.name)
+            # Check if bucket exists and we have access
+            s3.meta.client.head_bucket(Bucket=self.name)
+            return bucket
+        except botocore.exceptions.NoCredentialsError:
             print(
                 (
                     "AWS credentials not properly configured, "
@@ -150,23 +155,23 @@ class S3Queue(Thread):
         Upload `filename` to `bucket`.
 
         :param filename: Filename to upload
-        :param bucket: A :class:`boto.s3.bucket.Bucket` instance
+        :param bucket: A boto3 S3 bucket resource
         :type filename: str
-        :type bucket: :class:`boto.s3.bucket.Bucket`
+        :type bucket: boto3.resources.factory.s3.Bucket
 
         """
         # Get a new key in this bucket, set its name and upload to it
         try:
             key = self._key(filename)
-            s3key = boto.s3.key.Key(bucket)
-            s3key.key = key
-            s3key.set_contents_from_filename(filename)
+            with open(filename, "rb") as f:
+                bucket.put_object(Key=key, Body=f)
 
             # Set the access for this key
+            obj = bucket.Object(key)
             if self.bucket.public:
-                s3key.set_acl("public-read")
+                obj.Acl().put(ACL="public-read")
             else:
-                s3key.set_acl("authenticated-read")
+                obj.Acl().put(ACL="authenticated-read")
         except Exception:
             self.log.debug("Failed %r", key, exc_info=True)
             self.failed.append(filename)
@@ -264,7 +269,10 @@ class S3Uploader(object):
             raise IOError("Directory %r does not exist." % self.directory)
 
         # Make sure the bucket is configured
-        if not self.bucket.get_new():
+        try:
+            self.bucket.get_new()
+        except Exception:
+            # If we can't access the bucket, there's nothing we can do
             return
 
         # Get all the files

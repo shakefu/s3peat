@@ -11,22 +11,31 @@ import pytest
 
 @pytest.fixture
 def mock_boto_s3(mocker):
-    """Mock boto.connect_s3 and related S3 operations."""
-    # Mock the connection
-    mock_conn = Mock()
+    """Mock boto3 S3 resource and related operations."""
+    # Mock the S3 resource
+    mock_s3_resource = Mock()
     mock_bucket = Mock()
-    mock_key = Mock()
+    mock_object = Mock()
+    mock_acl = Mock()
+    mock_client = Mock()
 
-    # Set up the connection chain
-    mock_conn.get_bucket.return_value = mock_bucket
+    # Set up the resource chain
+    mock_s3_resource.Bucket.return_value = mock_bucket
+    mock_s3_resource.meta.client = mock_client
+    mock_bucket.Object.return_value = mock_object
+    mock_bucket.put_object.return_value = None
+    mock_object.Acl.return_value = mock_acl
 
-    # Mock boto.connect_s3
-    mocker.patch("boto.connect_s3", return_value=mock_conn)
+    # Mock boto3.resource
+    mocker.patch("boto3.resource", return_value=mock_s3_resource)
 
-    # Mock boto.s3.key.Key
-    mocker.patch("boto.s3.key.Key", return_value=mock_key)
-
-    return {"conn": mock_conn, "bucket": mock_bucket, "key": mock_key}
+    return {
+        "resource": mock_s3_resource,
+        "bucket": mock_bucket,
+        "object": mock_object,
+        "acl": mock_acl,
+        "client": mock_client,
+    }
 
 
 @pytest.fixture
