@@ -37,8 +37,6 @@ from threading import Thread
 import boto3
 import botocore.exceptions
 
-__version__ = "1.0.0"
-
 
 class S3Bucket(object):
     """
