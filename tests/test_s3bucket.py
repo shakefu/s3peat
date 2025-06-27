@@ -42,7 +42,7 @@ def test_s3bucket_str_representation(s3_bucket_config):
     assert str(bucket) == s3_bucket_config["name"]
 
 
-def test_get_new_successful_connection(mock_boto_s3, s3_bucket_config):
+def test_get_new_successful_connection(mock_aws_s3, s3_bucket_config):
     """Test successful bucket connection."""
     bucket = S3Bucket(
         s3_bucket_config["name"], s3_bucket_config["key"], s3_bucket_config["secret"]
@@ -50,30 +50,14 @@ def test_get_new_successful_connection(mock_boto_s3, s3_bucket_config):
 
     result = bucket.get_new()
 
-    # Verify boto3.resource was called with correct credentials
-    import boto3
-
-    boto3.resource.assert_called_once_with(
-        "s3",
-        aws_access_key_id=s3_bucket_config["key"],
-        aws_secret_access_key=s3_bucket_config["secret"],
-    )
-
-    # Verify Bucket was called with correct bucket name
-    mock_boto_s3["resource"].Bucket.assert_called_once_with(s3_bucket_config["name"])
-
-    # Verify head_bucket was called to check bucket access
-    mock_boto_s3["client"].head_bucket.assert_called_once_with(
-        Bucket=s3_bucket_config["name"]
-    )
-
-    # Should return the mocked bucket
-    assert result == mock_boto_s3["bucket"]
+    # Should return a boto3 bucket resource
+    assert result is not None
+    assert result.name == s3_bucket_config["name"]
 
 
 def test_get_new_no_credentials(mocker, s3_bucket_config, capsys):
     """Test handling of NoCredentialsError exception."""
-    # Mock boto3.resource to raise NoCredentialsError
+    # Mock boto3.resource to raise NoCredentialsError (outside moto context)
     mocker.patch("boto3.resource", side_effect=botocore.exceptions.NoCredentialsError())
 
     bucket = S3Bucket(

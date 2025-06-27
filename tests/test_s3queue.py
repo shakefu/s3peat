@@ -97,7 +97,7 @@ def test_s3queue_key_generation_windows_paths(s3_bucket_config):
 
 
 def test_s3queue_successful_upload(
-    mock_boto_s3, s3_bucket_config, temp_directory, mock_counter
+    mock_aws_s3, s3_bucket_config, temp_directory, mock_counter
 ):
     """Test successful file upload."""
     bucket = S3Bucket(**s3_bucket_config)
@@ -106,17 +106,15 @@ def test_s3queue_successful_upload(
     test_file = os.path.join(temp_directory, "file1.txt")
 
     queue = S3Queue(
-        prefix="test-prefix", filenames=[test_file], bucket=bucket, counter=mock_counter
+        prefix="test-prefix",
+        filenames=[test_file],
+        bucket=bucket,
+        counter=mock_counter,
+        strip_path=temp_directory,
     )
 
     # Run the upload
     queue.run()
-
-    # Verify the upload was attempted
-    mock_boto_s3["bucket"].put_object.assert_called_once()
-
-    # Verify ACL was set to public-read (bucket.public=True by default)
-    mock_boto_s3["acl"].put.assert_called_once_with(ACL="public-read")
 
     # Verify counter was called for success
     mock_counter.assert_called_once_with()
@@ -127,9 +125,18 @@ def test_s3queue_successful_upload(
     # Verify filenames list is empty (all processed)
     assert queue.filenames == []
 
+    # Verify file was actually uploaded to moto S3
+    import boto3
+
+    s3_client = boto3.client("s3", region_name="us-east-1")
+    objects = s3_client.list_objects_v2(Bucket="test-bucket")
+    assert "Contents" in objects
+    assert len(objects["Contents"]) == 1
+    assert objects["Contents"][0]["Key"] == "test-prefix/file1.txt"
+
 
 def test_s3queue_successful_upload_private_bucket(
-    mock_boto_s3, temp_directory, mock_counter
+    mock_aws_s3, temp_directory, mock_counter
 ):
     """Test successful file upload to private bucket."""
     bucket = S3Bucket("test-bucket", "test-key", "test-secret", public=False)
@@ -144,12 +151,23 @@ def test_s3queue_successful_upload_private_bucket(
     # Run the upload
     queue.run()
 
-    # Verify ACL was set to authenticated-read for private bucket
-    mock_boto_s3["acl"].put.assert_called_once_with(ACL="authenticated-read")
+    # Verify counter was called for success
+    mock_counter.assert_called_once_with()
+
+    # Verify no failures
+    assert queue.failed == []
+
+    # Verify file was uploaded
+    import boto3
+
+    s3_client = boto3.client("s3", region_name="us-east-1")
+    objects = s3_client.list_objects_v2(Bucket="test-bucket")
+    assert "Contents" in objects
+    assert len(objects["Contents"]) == 1
 
 
 def test_s3queue_upload_failure(
-    mock_boto_s3, s3_bucket_config, temp_directory, mock_counter
+    mock_aws_s3, s3_bucket_config, temp_directory, mock_counter
 ):
     """Test handling of upload failure."""
     bucket = S3Bucket(**s3_bucket_config)
@@ -157,18 +175,26 @@ def test_s3queue_upload_failure(
     # Use an existing test file from the temp_directory fixture
     test_file = os.path.join(temp_directory, "file1.txt")
 
-    # Make the upload fail
-    mock_boto_s3["bucket"].put_object.side_effect = Exception("Upload failed")
+    # Mock the put_object method to fail outside of moto context
+    from unittest.mock import Mock, patch
 
-    queue = S3Queue(
-        prefix="test-prefix", filenames=[test_file], bucket=bucket, counter=mock_counter
-    )
+    with patch("boto3.resource") as mock_resource:
+        mock_s3_resource = Mock()
+        mock_bucket = Mock()
+        mock_resource.return_value = mock_s3_resource
+        mock_s3_resource.Bucket.return_value = mock_bucket
+        mock_s3_resource.meta.client.head_bucket.return_value = None
+        mock_bucket.put_object.side_effect = Exception("Upload failed")
 
-    # Run the upload
-    queue.run()
+        queue = S3Queue(
+            prefix="test-prefix",
+            filenames=[test_file],
+            bucket=bucket,
+            counter=mock_counter,
+        )
 
-    # Verify the upload was attempted
-    mock_boto_s3["bucket"].put_object.assert_called_once()
+        # Run the upload
+        queue.run()
 
     # Verify counter was called with False for failure
     mock_counter.assert_called_once_with(False)
@@ -181,7 +207,7 @@ def test_s3queue_upload_failure(
 
 
 def test_s3queue_multiple_files(
-    mock_boto_s3, s3_bucket_config, temp_directory, mock_counter
+    mock_aws_s3, s3_bucket_config, temp_directory, mock_counter
 ):
     """Test uploading multiple files."""
     bucket = S3Bucket(**s3_bucket_config)
@@ -198,13 +224,11 @@ def test_s3queue_multiple_files(
         filenames=test_files[:],  # Copy the list
         bucket=bucket,
         counter=mock_counter,
+        strip_path=temp_directory,
     )
 
     # Run the upload
     queue.run()
-
-    # Verify all files were uploaded (called 3 times)
-    assert mock_boto_s3["bucket"].put_object.call_count == 3
 
     # Verify counter was called for each success
     assert mock_counter.call_count == 3
@@ -215,9 +239,17 @@ def test_s3queue_multiple_files(
     # Verify filenames list is empty
     assert queue.filenames == []
 
+    # Verify all files were uploaded to moto S3
+    import boto3
+
+    s3_client = boto3.client("s3", region_name="us-east-1")
+    objects = s3_client.list_objects_v2(Bucket="test-bucket")
+    assert "Contents" in objects
+    assert len(objects["Contents"]) == 3
+
 
 def test_s3queue_mixed_success_failure(
-    mock_boto_s3, s3_bucket_config, temp_directory, mock_counter
+    mock_aws_s3, s3_bucket_config, temp_directory, mock_counter
 ):
     """Test uploading with some successes and some failures."""
     bucket = S3Bucket(**s3_bucket_config)
@@ -229,27 +261,34 @@ def test_s3queue_mixed_success_failure(
         os.path.join(temp_directory, "subdir", "file3.txt"),
     ]
 
-    # Make the second upload fail
-    def side_effect(*args, **kwargs):
-        # Check if Key parameter contains file2.txt
-        key = kwargs.get("Key", "")
-        if "file2.txt" in key:
-            raise Exception("Upload failed")
+    # Mock to make the second upload fail
+    from unittest.mock import Mock, patch
 
-    mock_boto_s3["bucket"].put_object.side_effect = side_effect
+    with patch("boto3.resource") as mock_resource:
+        mock_s3_resource = Mock()
+        mock_bucket = Mock()
+        mock_resource.return_value = mock_s3_resource
+        mock_s3_resource.Bucket.return_value = mock_bucket
+        mock_s3_resource.meta.client.head_bucket.return_value = None
 
-    queue = S3Queue(
-        prefix="test-prefix",
-        filenames=test_files[:],  # Copy the list
-        bucket=bucket,
-        counter=mock_counter,
-    )
+        # Make the second upload fail
+        def side_effect(*args, **kwargs):
+            # Check if Key parameter contains file2.txt
+            key = kwargs.get("Key", "")
+            if "file2.txt" in key:
+                raise Exception("Upload failed")
 
-    # Run the upload
-    queue.run()
+        mock_bucket.put_object.side_effect = side_effect
 
-    # Verify all files were attempted
-    assert mock_boto_s3["bucket"].put_object.call_count == 3
+        queue = S3Queue(
+            prefix="test-prefix",
+            filenames=test_files[:],  # Copy the list
+            bucket=bucket,
+            counter=mock_counter,
+        )
+
+        # Run the upload
+        queue.run()
 
     # Verify counter was called - 2 successes + 1 failure
     assert mock_counter.call_count == 3

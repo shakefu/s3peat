@@ -243,18 +243,25 @@ def test_upload_nonexistent_directory(s3_bucket_config):
 
 
 def test_upload_bucket_connection_failure(
-    mock_boto_s3, s3_bucket_config, temp_directory
+    mock_aws_s3, s3_bucket_config, temp_directory
 ):
     """Test upload when bucket connection fails."""
-    # Make head_bucket raise an exception to simulate connection failure
-    mock_boto_s3["client"].head_bucket.side_effect = Exception("Connection failed")
+    # Mock boto3.resource to fail outside of moto context
+    from unittest.mock import Mock, patch
 
-    bucket = S3Bucket(**s3_bucket_config)
-    uploader = S3Uploader(temp_directory, "prefix", bucket)
+    with patch("boto3.resource") as mock_resource:
+        mock_s3_resource = Mock()
+        mock_resource.return_value = mock_s3_resource
+        mock_s3_resource.meta.client.head_bucket.side_effect = Exception(
+            "Connection failed"
+        )
 
-    # Should return early without uploading
-    result = uploader.upload()
-    assert result is None
+        bucket = S3Bucket(**s3_bucket_config)
+        uploader = S3Uploader(temp_directory, "prefix", bucket)
+
+        # Should return early without uploading
+        result = uploader.upload()
+        assert result is None
 
 
 def test_stop_method(s3_bucket_config, temp_directory, capsys):
@@ -286,7 +293,7 @@ def test_stop_method(s3_bucket_config, temp_directory, capsys):
 
 
 @patch("time.sleep")  # Mock sleep to speed up test
-def test_upload_successful(mock_sleep, mock_boto_s3, s3_bucket_config, temp_directory):
+def test_upload_successful(mock_sleep, mock_aws_s3, s3_bucket_config, temp_directory):
     """Test successful upload process."""
     bucket = S3Bucket(**s3_bucket_config)
     uploader = S3Uploader(temp_directory, "prefix", bucket, concurrency=2)
@@ -306,7 +313,7 @@ def test_upload_successful(mock_sleep, mock_boto_s3, s3_bucket_config, temp_dire
         assert queue.daemon
 
 
-def test_upload_with_signal_handling(mock_boto_s3, s3_bucket_config, temp_directory):
+def test_upload_with_signal_handling(mock_aws_s3, s3_bucket_config, temp_directory):
     """Test upload with signal handling enabled."""
     bucket = S3Bucket(**s3_bucket_config)
     uploader = S3Uploader(temp_directory, "prefix", bucket, handle_signals=True)

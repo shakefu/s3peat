@@ -150,7 +150,7 @@ def test_main_upload_ioerror(mock_bucket_class, mock_uploader_class, capsys):
     assert "Directory does not exist" in captured.err
 
 
-def test_main_dry_run_basic(temp_directory, mock_boto_s3, capsys):
+def test_main_dry_run_basic(temp_directory, mock_aws_s3, capsys):
     """Test basic dry run functionality."""
     argv = [
         "--bucket",
@@ -171,7 +171,7 @@ def test_main_dry_run_basic(temp_directory, mock_boto_s3, capsys):
     assert "files found" in captured.out
 
 
-def test_main_dry_run_verbose(temp_directory, mock_boto_s3, capsys):
+def test_main_dry_run_verbose(temp_directory, mock_aws_s3, capsys):
     """Test verbose dry run."""
     argv = [
         "--bucket",
@@ -195,7 +195,7 @@ def test_main_dry_run_verbose(temp_directory, mock_boto_s3, capsys):
     assert "files found" in captured.out
 
 
-def test_main_dry_run_no_files(mock_boto_s3, capsys):
+def test_main_dry_run_no_files(mock_aws_s3, capsys):
     """Test dry run with no files found."""
     # Create empty directory
     import tempfile
@@ -249,7 +249,7 @@ def test_main_dry_run_connection_error(temp_directory, mocker, capsys):
     assert "Error connecting to S3 bucket" in captured.err
 
 
-def test_main_with_include_exclude(temp_directory, mock_boto_s3):
+def test_main_with_include_exclude(temp_directory, mock_aws_s3):
     """Test CLI with include and exclude filters."""
     argv = [
         "--bucket",
@@ -271,7 +271,7 @@ def test_main_with_include_exclude(temp_directory, mock_boto_s3):
     assert exc_info.value.code == 0
 
 
-def test_main_private_bucket(temp_directory, mock_boto_s3):
+def test_main_private_bucket(temp_directory, mock_aws_s3):
     """Test CLI with private bucket flag."""
     argv = [
         "--bucket",
@@ -290,7 +290,7 @@ def test_main_private_bucket(temp_directory, mock_boto_s3):
     assert exc_info.value.code == 0
 
 
-def test_main_with_prefix(temp_directory, mock_boto_s3):
+def test_main_with_prefix(temp_directory, mock_aws_s3):
     """Test CLI with prefix."""
     argv = [
         "--bucket",
@@ -310,7 +310,7 @@ def test_main_with_prefix(temp_directory, mock_boto_s3):
     assert exc_info.value.code == 0
 
 
-def test_main_with_concurrency(temp_directory, mock_boto_s3):
+def test_main_with_concurrency(temp_directory, mock_aws_s3):
     """Test CLI with concurrency setting."""
     argv = [
         "--bucket",
@@ -343,7 +343,7 @@ def test_regex_helper():
         main.regex(r"[invalid")
 
 
-def test_main_verbose_logging(temp_directory, mock_boto_s3):
+def test_main_verbose_logging(temp_directory, mock_aws_s3):
     """Test verbose logging levels."""
     # Test -vvv (very verbose)
     argv = [
@@ -367,7 +367,7 @@ def test_main_verbose_logging(temp_directory, mock_boto_s3):
         mock_logging.assert_called()
 
 
-def test_main_extra_verbose_logging(temp_directory, mock_boto_s3):
+def test_main_extra_verbose_logging(temp_directory, mock_aws_s3):
     """Test extra verbose logging levels."""
     # Test -vvvv (extra verbose)
     argv = [
@@ -392,7 +392,7 @@ def test_main_extra_verbose_logging(temp_directory, mock_boto_s3):
         mock_get_logger.assert_called()
 
 
-def test_main_dry_run_verbose_with_connection(temp_directory, mock_boto_s3, capsys):
+def test_main_dry_run_verbose_with_connection(temp_directory, mock_aws_s3, capsys):
     """Test verbose dry run with successful S3 connection."""
     argv = [
         "--bucket",
