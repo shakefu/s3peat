@@ -6,36 +6,31 @@ import os
 import tempfile
 from unittest.mock import Mock
 
+import boto3
 import pytest
+from moto import mock_aws
 
 
-@pytest.fixture
-def mock_boto_s3(mocker):
-    """Mock boto3 S3 resource and related operations."""
-    # Mock the S3 resource
-    mock_s3_resource = Mock()
-    mock_bucket = Mock()
-    mock_object = Mock()
-    mock_acl = Mock()
-    mock_client = Mock()
+@pytest.fixture(scope="function")
+def aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
-    # Set up the resource chain
-    mock_s3_resource.Bucket.return_value = mock_bucket
-    mock_s3_resource.meta.client = mock_client
-    mock_bucket.Object.return_value = mock_object
-    mock_bucket.put_object.return_value = None
-    mock_object.Acl.return_value = mock_acl
 
-    # Mock boto3.resource
-    mocker.patch("boto3.resource", return_value=mock_s3_resource)
-
-    return {
-        "resource": mock_s3_resource,
-        "bucket": mock_bucket,
-        "object": mock_object,
-        "acl": mock_acl,
-        "client": mock_client,
-    }
+@pytest.fixture(scope="function")
+def mock_aws_s3(aws_credentials):
+    """
+    Mock all AWS interactions using moto
+    """
+    with mock_aws():
+        # Create a bucket for tests that need it
+        s3_client = boto3.client("s3", region_name="us-east-1")
+        s3_client.create_bucket(Bucket="test-bucket")
+        yield s3_client
 
 
 @pytest.fixture
