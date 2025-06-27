@@ -435,3 +435,21 @@ def sync_to_s3(
         handle_signals=handle_signals,
     )
     return uploader.upload()
+
+
+def version():
+    """Get the version of s3peat package."""
+    try:
+        from importlib.metadata import version as get_version
+
+        return get_version("s3peat")
+    except ImportError:
+        try:
+            # Fallback for Python < 3.8
+            from importlib_metadata import version as get_version
+
+            return get_version("s3peat")
+        except ImportError:
+            return "0.0.0-dev"
+    except Exception:
+        return "0.0.0-dev"
