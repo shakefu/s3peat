@@ -246,8 +246,8 @@ def test_upload_bucket_connection_failure(
     mock_boto_s3, s3_bucket_config, temp_directory
 ):
     """Test upload when bucket connection fails."""
-    # Make get_new return None to simulate connection failure
-    mock_boto_s3["conn"].get_bucket.return_value = None
+    # Make head_bucket raise an exception to simulate connection failure
+    mock_boto_s3["client"].head_bucket.side_effect = Exception("Connection failed")
 
     bucket = S3Bucket(**s3_bucket_config)
     uploader = S3Uploader(temp_directory, "prefix", bucket)

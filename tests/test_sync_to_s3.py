@@ -53,9 +53,7 @@ def test_sync_to_s3_with_failures(mock_boto_s3, s3_bucket_config, temp_directory
     bucket = S3Bucket(**s3_bucket_config)
 
     # Make uploads fail
-    mock_boto_s3["key"].set_contents_from_filename.side_effect = Exception(
-        "Upload failed"
-    )
+    mock_boto_s3["bucket"].put_object.side_effect = Exception("Upload failed")
 
     with patch("time.sleep"):  # Mock sleep to speed up test
         result = sync_to_s3(

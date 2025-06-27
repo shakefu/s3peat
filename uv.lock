@@ -2,17 +2,80 @@ version = 1
 revision = 2
 requires-python = ">=3.8"
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
     "python_full_version < '3.9'",
 ]
 
 [[package]]
-name = "boto"
-version = "2.49.0"
+name = "boto3"
+version = "1.37.38"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c8/af/54a920ff4255664f5d238b5aebd8eedf7a07c7a5e71e27afcfe840b82f51/boto-2.49.0.tar.gz", hash = "sha256:ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a", size = 1478498, upload-time = "2018-07-11T20:58:58.057Z" }
+resolution-markers = [
+    "python_full_version < '3.9'",
+]
+dependencies = [
+    { name = "botocore", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "jmespath", marker = "python_full_version < '3.9'" },
+    { name = "s3transfer", version = "0.11.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0d/b5/d1c2e8c484cea43891629bbab6ca90ce9ca932586750bc0e786c8f096ccf/boto3-1.37.38.tar.gz", hash = "sha256:88c02910933ab7777597d1ca7c62375f52822e0aa1a8e0c51b2598a547af42b2", size = 111623, upload-time = "2025-04-21T19:27:18.06Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/10/c0b78c27298029e4454a472a1919bde20cb182dab1662cec7f2ca1dcc523/boto-2.49.0-py2.py3-none-any.whl", hash = "sha256:147758d41ae7240dc989f0039f27da8ca0d53734be0eb869ef16e3adcfa462e8", size = 1359202, upload-time = "2018-07-11T20:58:55.711Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/87/8189f22ee798177bc7b40afd13f046442c5f91b699e70a950b42ff447e80/boto3-1.37.38-py3-none-any.whl", hash = "sha256:b6d42803607148804dff82389757827a24ce9271f0583748853934c86310999f", size = 139922, upload-time = "2025-04-21T19:27:16.107Z" },
+]
+
+[[package]]
+name = "boto3"
+version = "1.38.46"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
+]
+dependencies = [
+    { name = "botocore", version = "1.38.46", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+    { name = "jmespath", marker = "python_full_version >= '3.9'" },
+    { name = "s3transfer", version = "0.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cc/56/ca67d22364ce8f23b1885d9a1bae50d8005fa9b32ec0deddba0b19079b99/boto3-1.38.46.tar.gz", hash = "sha256:d1ca2b53138afd0341e1962bd52be6071ab7a63c5b4f89228c5ef8942c40c852", size = 111883, upload-time = "2025-06-27T20:18:17.096Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b6/13/0eb850c821a976346a905370bb30c86da7edc2bbc3977c445fffc6306032/boto3-1.38.46-py3-none-any.whl", hash = "sha256:9c8e88a32a6465e5905308708cff5b17547117f06982908bdfdb0108b4a65079", size = 139925, upload-time = "2025-06-27T20:18:15.366Z" },
+]
+
+[[package]]
+name = "botocore"
+version = "1.37.38"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.9'",
+]
+dependencies = [
+    { name = "jmespath", marker = "python_full_version < '3.9'" },
+    { name = "python-dateutil", marker = "python_full_version < '3.9'" },
+    { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/34/79/4e072e614339727f79afef704e5993b5b4d2667c1671c757cc4deb954744/botocore-1.37.38.tar.gz", hash = "sha256:c3ea386177171f2259b284db6afc971c959ec103fa2115911c4368bea7cbbc5d", size = 13832365, upload-time = "2025-04-21T19:27:05.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/55/1b/93f3504afc7c523dcaa8a8147cfc75421983e30b08d9f93a533929589630/botocore-1.37.38-py3-none-any.whl", hash = "sha256:23b4097780e156a4dcaadfc1ed156ce25cb95b6087d010c4bb7f7f5d9bc9d219", size = 13499391, upload-time = "2025-04-21T19:27:00.869Z" },
+]
+
+[[package]]
+name = "botocore"
+version = "1.38.46"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
+]
+dependencies = [
+    { name = "jmespath", marker = "python_full_version >= '3.9'" },
+    { name = "python-dateutil", marker = "python_full_version >= '3.9'" },
+    { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
+    { name = "urllib3", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cf/5f/d76870e4399fbfc12aa5c3bb36029edfc1a434392afc70a343c9d7d96e90/botocore-1.38.46.tar.gz", hash = "sha256:8798e5a418c27cf93195b077153644aea44cb171fcd56edc1ecebaa1e49e226e", size = 14074340, upload-time = "2025-06-27T20:18:06.646Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a4/00/dd90b7a0255587ba1c9754d32a221adb4a9022f181df3eef401b0b9fadfc/botocore-1.38.46-py3-none-any.whl", hash = "sha256:89ca782ffbf2e8769ca9c89234cfa5ca577f1987d07d913ee3c68c4776b1eb5b", size = 13736872, upload-time = "2025-06-27T20:18:00.901Z" },
 ]
 
 [[package]]
@@ -212,7 +275,8 @@ name = "coverage"
 version = "7.9.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e7/e0/98670a80884f64578f0c22cd70c5e81a6e07b08167721c7487b4d70a7ca0/coverage-7.9.1.tar.gz", hash = "sha256:6cf43c78c4282708a28e466316935ec7489a9c487518a77fa68f716c67909cec", size = 813650, upload-time = "2025-06-13T13:02:28.627Z" }
 wheels = [
@@ -342,6 +406,15 @@ wheels = [
 ]
 
 [[package]]
+name = "jmespath"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/2a/e867e8531cf3e36b41201936b7fa7ba7b5702dbef42922193f05c8976cd6/jmespath-1.0.1.tar.gz", hash = "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe", size = 25843, upload-time = "2022-06-17T18:00:12.224Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/b4/b9b800c45527aadd64d5b442f9b932b00648617eb5d63d2c7a6587b7cafc/jmespath-1.0.1-py3-none-any.whl", hash = "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980", size = 20256, upload-time = "2022-06-17T18:00:10.251Z" },
+]
+
+[[package]]
 name = "packaging"
 version = "25.0"
 source = { registry = "https://pypi.org/simple" }
@@ -367,7 +440,8 @@ name = "pluggy"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
 wheels = [
@@ -408,7 +482,8 @@ name = "pytest"
 version = "8.4.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
 ]
 dependencies = [
     { name = "colorama", marker = "python_full_version >= '3.9' and sys_platform == 'win32'" },
@@ -445,7 +520,8 @@ name = "pytest-cov"
 version = "6.2.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
 ]
 dependencies = [
     { name = "coverage", version = "7.9.1", source = { registry = "https://pypi.org/simple" }, extra = ["toml"], marker = "python_full_version >= '3.9'" },
@@ -471,6 +547,18 @@ wheels = [
 ]
 
 [[package]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432, upload-time = "2024-03-01T18:36:20.211Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
+]
+
+[[package]]
 name = "pytool"
 version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -491,7 +579,8 @@ name = "pytool"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
 ]
 dependencies = [
     { name = "simplejson", marker = "python_full_version >= '3.9'" },
@@ -509,8 +598,8 @@ dependencies = [
     { name = "certifi" },
     { name = "charset-normalizer" },
     { name = "idna" },
-    { name = "urllib3", version = "2.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
-    { name = "urllib3", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+    { name = "urllib3", version = "1.26.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "urllib3", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e1/0a/929373653770d8a0d7ea76c37de6e41f11eb07559b103b1c02cafb3f7cf8/requests-2.32.4.tar.gz", hash = "sha256:27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422", size = 135258, upload-time = "2025-06-09T16:43:07.34Z" }
 wheels = [
@@ -522,7 +611,8 @@ name = "s3peat"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
-    { name = "boto" },
+    { name = "boto3", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "boto3", version = "1.38.46", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "pytool", version = "4.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "pytool", version = "6.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
 ]
@@ -539,8 +629,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boto" },
-    { name = "pytool" },
+    { name = "boto3", specifier = ">=1.26.0" },
+    { name = "pytool", specifier = ">=4.0.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -549,6 +639,37 @@ dev = [
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "pytest-mock", specifier = ">=3.14.1" },
+]
+
+[[package]]
+name = "s3transfer"
+version = "0.11.5"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.9'",
+]
+dependencies = [
+    { name = "botocore", version = "1.37.38", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/2b/5c9562795c2eb2b5f63536961754760c25bf0f34af93d36aa28dea2fb303/s3transfer-0.11.5.tar.gz", hash = "sha256:8c8aad92784779ab8688a61aefff3e28e9ebdce43142808eaa3f0b0f402f68b7", size = 149107, upload-time = "2025-04-17T19:23:19.051Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/45/39/13402e323666d17850eca87e4cd6ecfcf9fd7809cac9efdcce10272fc29d/s3transfer-0.11.5-py3-none-any.whl", hash = "sha256:757af0f2ac150d3c75bc4177a32355c3862a98d20447b69a0161812992fe0bd4", size = 84782, upload-time = "2025-04-17T19:23:17.516Z" },
+]
+
+[[package]]
+name = "s3transfer"
+version = "0.13.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
+]
+dependencies = [
+    { name = "botocore", version = "1.38.46", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ed/5d/9dcc100abc6711e8247af5aa561fc07c4a046f72f659c3adea9a449e191a/s3transfer-0.13.0.tar.gz", hash = "sha256:f5e6db74eb7776a37208001113ea7aa97695368242b364d73e91c981ac522177", size = 150232, upload-time = "2025-05-22T19:24:50.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/18/17/22bf8155aa0ea2305eefa3a6402e040df7ebe512d1310165eda1e233c3f8/s3transfer-0.13.0-py3-none-any.whl", hash = "sha256:0148ef34d6dd964d0d8cf4311b2b21c474693e57c2e069ec708ce043d2b527be", size = 85152, upload-time = "2025-05-22T19:24:48.703Z" },
 ]
 
 [[package]]
@@ -703,7 +824,8 @@ name = "typing-extensions"
 version = "4.14.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
+    "python_full_version == '3.9.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d1/bc/51647cd02527e87d05cb083ccc402f93e441606ff1f01739a62c8ad09ba5/typing_extensions-4.14.0.tar.gz", hash = "sha256:8676b788e32f02ab42d9e7c61324048ae4c6d844a399eebace3d4979d75ceef4", size = 107423, upload-time = "2025-06-02T14:52:11.399Z" }
 wheels = [
@@ -712,14 +834,15 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "2.2.3"
+version = "1.26.20"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
+    "python_full_version == '3.9.*'",
     "python_full_version < '3.9'",
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/63/22ba4ebfe7430b76388e7cd448d5478814d3032121827c12a2cc287e2260/urllib3-2.2.3.tar.gz", hash = "sha256:e7d814a81dad81e6caf2ec9fdedb284ecc9c73076b62654547cc64ccdcae26e9", size = 300677, upload-time = "2024-09-12T10:52:18.401Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/e8/6ff5e6bc22095cfc59b6ea711b687e2b7ed4bdb373f7eeec370a97d7392f/urllib3-1.26.20.tar.gz", hash = "sha256:40c2dc0c681e47eb8f90e7e27bf6ff7df2e677421fd46756da1161c39ca70d32", size = 307380, upload-time = "2024-08-29T15:43:11.37Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ce/d9/5f4c13cecde62396b0d3fe530a50ccea91e7dfc1ccf0e09c228841bb5ba8/urllib3-2.2.3-py3-none-any.whl", hash = "sha256:ca899ca043dcb1bafa3e262d73aa25c465bfb49e0bd9dd5d59f1d0acba2f8fac", size = 126338, upload-time = "2024-09-12T10:52:16.589Z" },
+    { url = "https://files.pythonhosted.org/packages/33/cf/8435d5a7159e2a9c83a95896ed596f68cf798005fe107cc655b5c5c14704/urllib3-1.26.20-py2.py3-none-any.whl", hash = "sha256:0ed14ccfbf1c30a9072c7ca157e4319b70d65f623e91e7b32fadb2853431016e", size = 144225, upload-time = "2024-08-29T15:43:08.921Z" },
 ]
 
 [[package]]
@@ -727,7 +850,7 @@ name = "urllib3"
 version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.9'",
+    "python_full_version >= '3.10'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599c47dd506532914ce044817c7752a79b6a51286319bc/urllib3-2.5.0.tar.gz", hash = "sha256:3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760", size = 393185, upload-time = "2025-06-18T14:07:41.644Z" }
 wheels = [
