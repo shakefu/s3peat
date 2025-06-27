@@ -51,3 +51,9 @@ docs/_output
 
 # VSCode
 .vscode
+
+# Ruff
+.ruff_cache
+
+# UV
+.venv
