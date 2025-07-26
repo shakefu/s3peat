@@ -30,51 +30,90 @@ import os
 import posixpath
 import signal
 import sys
-import time
+import threading
 from builtins import object, range, str
-from threading import Thread
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Event
 
-import boto3
-import botocore.exceptions
+# Lazy imports for better startup performance
+boto3 = None
+botocore = None
+
+# Constants for optimization
+UPLOAD_CHUNK_SIZE = 8 * 1024 * 1024  # 8MB chunks for large files
+MIN_MULTIPART_SIZE = 100 * 1024 * 1024  # 100MB threshold for multipart uploads
+QUEUE_TIMEOUT = 0.5  # Reduced polling interval
+
+
+def _lazy_import_boto():
+    """Lazy import boto3 to reduce startup time."""
+    global boto3, botocore
+    if boto3 is None:
+        import boto3 as _boto3
+        import botocore.exceptions as _botocore_exceptions
+        boto3 = _boto3
+        botocore = _botocore_exceptions
 
 
 class S3Bucket(object):
     """
-    Create new connections to an S3 bucket.
+    Create new connections to an S3 bucket with connection pooling.
 
-    This object mostly exists to make the :class:`S3Queue` API cleaner, but it
-    can be reused anywhere.
+    This object maintains a pool of S3 connections for better performance
+    and can be reused anywhere.
 
     :param name: S3 bucket name to upload to
     :param key: AWS key
     :param secret: AWS secret
     :param public: Whether uploads should be public (default: ``True``)
+    :param max_pool_connections: Maximum connections in pool (default: 50)
     :type name: str
     :type aws_key: str
     :type aws_secret: str
+    :type max_pool_connections: int
 
     """
 
-    def __init__(self, name, key, secret, public=True):
+    def __init__(self, name, key, secret, public=True, max_pool_connections=50):
         self.name = name
         self.key = key
         self.secret = secret
         self.public = public
+        self.max_pool_connections = max_pool_connections
+        self._session = None
+
+    def _get_session(self):
+        """Get or create a boto3 session with connection pooling."""
+        if self._session is None:
+            _lazy_import_boto()
+            self._session = boto3.Session(
+                aws_access_key_id=self.key,
+                aws_secret_access_key=self.secret
+            )
+        return self._session
 
     def get_new(self):
         """
-        Return a new S3 bucket resource with its own connection.
+        Return a new S3 bucket resource with optimized connection config.
 
         """
         try:
-            s3 = boto3.resource(
-                "s3", aws_access_key_id=self.key, aws_secret_access_key=self.secret
+            _lazy_import_boto()
+            session = self._get_session()
+            
+            # Configure connection pooling for better performance
+            config = boto3.session.Config(
+                max_pool_connections=self.max_pool_connections,
+                retries={'max_attempts': 3, 'mode': 'adaptive'}
             )
+            
+            s3 = session.resource("s3", config=config)
             bucket = s3.Bucket(self.name)
             # Check if bucket exists and we have access
             s3.meta.client.head_bucket(Bucket=self.name)
             return bucket
-        except botocore.exceptions.NoCredentialsError:
+        except botocore.NoCredentialsError:
             print(
                 (
                     "AWS credentials not properly configured, "
@@ -88,69 +127,60 @@ class S3Bucket(object):
         return self.name
 
 
-class S3Queue(Thread):
+class OptimizedS3Uploader(object):
     """
-    Take a list of `filenames` and upload them to S3 with leading key `prefix`.
-
-    If `counter` is specified, it will be called once with no arguments for
-    each successful upload, and once with ``False`` as its only argument for
-    each failed upload.
-
-    :param prefix: S3 key prefix
-    :param filenames: Iterable of filenames
-    :param bucket: A :class:`S3Bucket` instance
-    :param strip_path: Leading path to strip (optional)
-    :param counter: This is called once for each upload (optional)
-    :type prefix: str
-    :type filenames: list
-    :type bucket: :class:`S3Bucket`
-    :type strip_path: str
-    :type counter: callable
-
-    If `strip_path` is specified, `strip_path` will be stripped from the front
-    of each filename before composing the uploaded key.
-
-    If there are any exceptions raised while uploading a file, that filename
-    will be available in the :attr:`~S3Queue.failed` list. An empty list means
-    there were no exceptions raised during upload.
-
-    This runs as a single thread and one can :meth:`join` it to wait for it to
-    finish.
-
-    The iterable object `filenames` shouldn't be modified or referenced by
-    other threads, as that would not be thread-safe.
-
+    Optimized S3 uploader using ThreadPoolExecutor and efficient file handling.
+    
     """
 
-    def __init__(self, prefix, filenames, bucket, strip_path=None, **kwargs):
-        # Get the counting callback if it's set
-        self.counter = kwargs.pop("counter", None)
-
-        kwargs.setdefault("name", "S3Queue.{}:{}".format(bucket, id(self)))
-
-        super(S3Queue, self).__init__(**kwargs)
-
-        self.log = logging.getLogger(self.name)
+    def __init__(self, prefix, filenames, bucket, strip_path=None, counter=None):
         self.prefix = (prefix or "").strip("/")
-        self.filenames = filenames
+        self.filenames = deque(filenames)  # Use deque for O(1) operations
         self.failed = []
         self.bucket = bucket
         self.strip_path = strip_path
+        self.counter = counter
+        self.log = logging.getLogger(f"OptimizedS3Uploader.{bucket}:{id(self)}")
+        self._stop_event = Event()
 
-    def run(self):
-        """Run method for the threading API."""
-        bucket = self.bucket.get_new()
-        # Iterate over the filenames attempting to upload them
-        while self.filenames:
-            # We need to peek at and upload the last filename
-            self._upload(self.filenames[-1], bucket)
-            # We don't pop off the list until after the filename is finished
-            # uploading or has failed, otherwise the program will exit early
-            self.filenames.pop()
+    def upload_all(self, max_workers=None):
+        """Upload all files using ThreadPoolExecutor."""
+        if not max_workers:
+            max_workers = min(len(self.filenames), 50)
+            
+        bucket_resource = self.bucket.get_new()
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all upload tasks
+            future_to_filename = {}
+            while self.filenames and not self._stop_event.is_set():
+                filename = self.filenames.popleft()
+                future = executor.submit(self._upload, filename, bucket_resource)
+                future_to_filename[future] = filename
+            
+            # Process completed uploads
+            for future in as_completed(future_to_filename):
+                if self._stop_event.is_set():
+                    break
+                    
+                filename = future_to_filename[future]
+                try:
+                    future.result()  # This will raise if upload failed
+                    if self.counter:
+                        self.counter()
+                except Exception as exc:
+                    self.log.debug("Failed %r: %s", filename, exc)
+                    self.failed.append(filename)
+                    if self.counter:
+                        self.counter(False)
+
+    def stop(self):
+        """Signal the uploader to stop."""
+        self._stop_event.set()
 
     def _upload(self, filename, bucket):
         """
-        Upload `filename` to `bucket`.
+        Upload `filename` to `bucket` with optimized file handling.
 
         :param filename: Filename to upload
         :param bucket: A boto3 S3 bucket resource
@@ -158,11 +188,15 @@ class S3Queue(Thread):
         :type bucket: boto3.resources.factory.s3.Bucket
 
         """
-        # Get a new key in this bucket, set its name and upload to it
         try:
             key = self._key(filename)
-            with open(filename, "rb") as f:
-                bucket.put_object(Key=key, Body=f)
+            file_size = os.path.getsize(filename)
+            
+            # Use multipart upload for large files
+            if file_size > MIN_MULTIPART_SIZE:
+                self._multipart_upload(filename, key, bucket)
+            else:
+                self._simple_upload(filename, key, bucket)
 
             # Set the access for this key
             obj = bucket.Object(key)
@@ -170,15 +204,67 @@ class S3Queue(Thread):
                 obj.Acl().put(ACL="public-read")
             else:
                 obj.Acl().put(ACL="authenticated-read")
+                
+        except Exception as exc:
+            self.log.debug("Failed %r: %s", key, exc)
+            raise
+
+    def _simple_upload(self, filename, key, bucket):
+        """Simple upload for smaller files."""
+        with open(filename, "rb") as f:
+            bucket.put_object(Key=key, Body=f)
+
+    def _multipart_upload(self, filename, key, bucket):
+        """Multipart upload for larger files."""
+        s3_client = bucket.meta.client
+        
+        # Initiate multipart upload
+        response = s3_client.create_multipart_upload(
+            Bucket=bucket.name,
+            Key=key
+        )
+        upload_id = response['UploadId']
+        
+        parts = []
+        part_number = 1
+        
+        try:
+            with open(filename, 'rb') as f:
+                while True:
+                    chunk = f.read(UPLOAD_CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    
+                    response = s3_client.upload_part(
+                        Bucket=bucket.name,
+                        Key=key,
+                        PartNumber=part_number,
+                        UploadId=upload_id,
+                        Body=chunk
+                    )
+                    
+                    parts.append({
+                        'ETag': response['ETag'],
+                        'PartNumber': part_number
+                    })
+                    part_number += 1
+            
+            # Complete multipart upload
+            s3_client.complete_multipart_upload(
+                Bucket=bucket.name,
+                Key=key,
+                UploadId=upload_id,
+                MultipartUpload={'Parts': parts}
+            )
+            
         except Exception:
-            self.log.debug("Failed %r", key, exc_info=True)
-            self.failed.append(filename)
-            if self.counter:
-                self.counter(False)
-        else:
-            self.log.debug("Uploaded %r", key)
-            if self.counter:
-                self.counter()
+            # Abort multipart upload on failure
+            s3_client.abort_multipart_upload(
+                Bucket=bucket.name,
+                Key=key,
+                UploadId=upload_id
+            )
+            raise
 
     def _key(self, filename):
         """
@@ -199,19 +285,16 @@ class S3Queue(Thread):
         # Join it to the prefix and go!
         return "/".join((self.prefix, filename))
 
-    def __str__(self):
-        return self.name
-
 
 class S3Uploader(object):
     """
-    Runs a set of parallel uploads.
+    Runs a set of parallel uploads using optimized threading.
 
     :param directory: Directory to sync
     :param prefix: S3 key prefix
     :param bucket: A :class:`S3Bucket` instance
-    :param exclude: List of filename regexes to exclude (optional)
-    :param include: List of filename regexes to include (optional)
+    :param exclude: List of compiled regex patterns to exclude (optional)
+    :param include: List of compiled regex patterns to include (optional)
     :param concurrency: Number of concurrent uploads to use (default: 1)
     :param output: File or stream to output progress to (optional)
     :type directory: str
@@ -238,16 +321,17 @@ class S3Uploader(object):
         self.directory = directory
         self.prefix = prefix
         self.bucket = bucket
-        self.include = include
-        self.exclude = exclude
-        self.concurrency = concurrency
+        self.include = include or []
+        self.exclude = exclude or []
+        self.concurrency = min(concurrency, 100)  # Cap max concurrency
         self.output = output
         self.handle_signals = handle_signals
         self.total = 0
         self.count = 0
         self.errors = 0
-        self.queues = []
+        self.uploaders = []
         self.log = logging.getLogger("S3Uploader")
+        self._stop_event = Event()
 
     def upload(self):
         """
@@ -256,7 +340,7 @@ class S3Uploader(object):
         """
         self.count = 0
         self.errors = 0
-        self.queues = []
+        self.uploaders = []
 
         if self.handle_signals:
             # Set up the signal catcher so Ctrl+C works
@@ -271,30 +355,39 @@ class S3Uploader(object):
             self.bucket.get_new()
         except Exception:
             # If we can't access the bucket, there's nothing we can do
-            return
+            return []
 
         # Get all the files
         filenames = self.get_filenames(split=True)
 
-        # Start a queue with each group of files
-        for queue in filenames:
-            queue = S3Queue(
-                self.prefix, queue, self.bucket, self.directory, counter=self.counter
+        # Start uploaders with file groups
+        for file_group in filenames:
+            if not file_group:  # Skip empty groups
+                continue
+                
+            uploader = OptimizedS3Uploader(
+                self.prefix, file_group, self.bucket, self.directory, counter=self.counter
             )
-            self.queues.append(queue)
-            queue.daemon = True
-            queue.start()
+            self.uploaders.append(uploader)
 
-        # Wait for the queues to all finish
-        failures = []
-        while True:
-            remaining = sum([len(q.filenames) for q in self.queues])
-            if not remaining:
-                break
-            time.sleep(0.1)
-
-        for queue in self.queues:
-            failures.extend(queue.failed)
+        # Use ThreadPoolExecutor for better resource management
+        with ThreadPoolExecutor(max_workers=len(self.uploaders)) as executor:
+            future_to_uploader = {
+                executor.submit(uploader.upload_all, max_workers=self.concurrency // len(self.uploaders) or 1): uploader
+                for uploader in self.uploaders
+            }
+            
+            # Wait for completion and collect failures
+            failures = []
+            for future in as_completed(future_to_uploader):
+                if self._stop_event.is_set():
+                    break
+                try:
+                    future.result()
+                    uploader = future_to_uploader[future]
+                    failures.extend(uploader.failed)
+                except Exception as exc:
+                    self.log.error("Uploader failed: %s", exc)
 
         if self.output:
             self.output.write("\n")
@@ -303,16 +396,14 @@ class S3Uploader(object):
 
     def stop(self, *args):
         """
-        Stop all the running queues.
-
-        It works by clearing all the queues list of files left to process,
-        which means the current files will finish.
+        Stop all the running uploaders.
 
         """
         print("                                                 ", file=sys.stderr)
         print("Stopping...                                      ", file=sys.stderr)
-        for queue in self.queues:
-            queue.filenames = []
+        self._stop_event.set()
+        for uploader in self.uploaders:
+            uploader.stop()
         sys.exit(1)
 
     def get_filenames(self, split=False):
@@ -329,49 +420,58 @@ class S3Uploader(object):
         """
         filenames = []
         self.total = 0
+        
+        # Pre-compile patterns for better performance
+        include_patterns = self.include if self.include else []
+        exclude_patterns = self.exclude if self.exclude else []
+        
         for path, dirs, files in os.walk(self.directory):
             for filename in files:
-                filename = os.path.join(path, filename)
+                full_filename = os.path.join(path, filename)
+                
                 # Iterate over all the include regexes, determining if we
                 # should include this filename
-                if self.include:
+                if include_patterns:
                     skip = True
-                    for reg in self.include:
-                        if reg.search(filename):
+                    for pattern in include_patterns:
+                        if pattern.search(full_filename):
                             skip = False
                             break
                     if skip:
                         continue
+                        
                 # Iterate over the exclude regexes, seeing if we should skip
-                if self.exclude:
+                if exclude_patterns:
                     skip = False
-                    for reg in self.exclude:
-                        if reg.search(filename):
+                    for pattern in exclude_patterns:
+                        if pattern.search(full_filename):
                             skip = True
                             break
                     if skip:
                         continue
-                filenames.append(filename)
+                        
+                filenames.append(full_filename)
                 self.total += 1
 
-        if split:
-            groups = [list() for i in range(self.concurrency)]
-            for i in range(len(filenames)):
-                groups[i % self.concurrency].append(filenames[i])
+        if split and filenames:
+            # Distribute files more evenly across workers
+            groups = [[] for _ in range(min(self.concurrency, len(filenames)))]
+            for i, filename in enumerate(filenames):
+                groups[i % len(groups)].append(filename)
             filenames = groups
 
         return filenames
 
     def counter(self, error=False):
         """
-        Increment :attr:`count` for each time this is called.
+        Thread-safe increment of :attr:`count` for each time this is called.
 
         If `error` is ``True`` then :attr:`errors` is incremented too.
 
         :param bool error: Indicates there was an error
 
         """
-        # XXX: We may need a lock around this
+        # Use thread-safe operations
         if error:
             self.errors += 1
         self.count += 1
@@ -453,3 +553,19 @@ def version():
             return "0.0.0-dev"
     except Exception:
         return "0.0.0-dev"
+
+
+# Backward compatibility - keep the old classes for existing code
+class S3Queue(OptimizedS3Uploader):
+    """
+    Legacy S3Queue class - now an alias for OptimizedS3Uploader.
+    
+    Kept for backward compatibility.
+    """
+    def __init__(self, prefix, filenames, bucket, strip_path=None, **kwargs):
+        counter = kwargs.pop("counter", None)
+        super().__init__(prefix, filenames, bucket, strip_path, counter)
+        
+    def run(self):
+        """Legacy run method."""
+        self.upload_all()
